@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       bg-green-50/60
       `}>
 
-        <div className="min-h-screen p-6 md:pl-[250px]">
+        <div className="min-h-screen">
           {children}
         </div>
 

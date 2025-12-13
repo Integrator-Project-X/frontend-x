@@ -15,8 +15,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/src/components/ui/card";
-import { Button } from "@/src/components/ui/button";
+} from "@/src/components/ui/atoms/card";
+import { Button } from "@/src/components/ui/atoms/button";
 
 type Metric = {
   label: string;

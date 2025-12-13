@@ -19,6 +19,7 @@ export const adminNavigation = [
     items: [
       { label: "Pet Owners", href: "/admin/users/pet-owners", icon: Users },
       { label: "Vets", href: "/admin/users/vets", icon: Users },
+      { label: "Pets", href: "/admin/users/pets", icon: Users }
     ],
   },
   {

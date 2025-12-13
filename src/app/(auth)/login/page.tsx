@@ -6,7 +6,10 @@ export default async function LoginPage() {
 
   return (
     <section className="w-full max-w-sm rounded-xl bg-white p-6 shadow">
-      <h1 className="mb-4 text-xl font-semibold">Login</h1>
+      <h1 className="mb-1 text-xl font-semibold">Login</h1>
+      <p className="mb-4 text-sm text-muted-foreground">
+        Sign in to continue
+      </p>
       <LoginForm />
     </section>
   );

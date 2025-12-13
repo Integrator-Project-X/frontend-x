@@ -1,17 +1,10 @@
-export type VerificationStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type VetClinicStatus = "A" | "" | "PENDING";
 
-export type VerificationClinic = {
+export type VetClinic = {
   id: string;
-  clinicName: string;
+  name: string;
   email: string;
   city: string;
-  submittedAt: string; // "YYYY-MM-DD"
-  status: VerificationStatus;
-
-  // flags / checks (MVP)
-  docsProvided: boolean;
-  locationProvided: boolean;
-
-  // Visibilidad pública en el marketplace
-  visibilityEnabled: boolean;
+  status: VetClinicStatus;
+  verified: boolean;
 };

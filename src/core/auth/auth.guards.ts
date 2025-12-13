@@ -1,19 +1,16 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAccessToken, getUserRole } from "./auth.cookies";
+import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 
 export async function requireAuth() {
-  const token = await getAccessToken();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(AUTH_COOKIES.token)?.value;
   if (!token) redirect("/login");
   return token;
 }
 
 export async function requireGuest() {
-  const token = await getAccessToken();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(AUTH_COOKIES.token)?.value;
   if (token) redirect("/dashboard");
-}
-
-export async function requireRole(role: "ADMIN" | "CLINIC" | "OWNER") {
-  await requireAuth();
-  const current = await getUserRole();
-  if (current !== role) redirect("/dashboard"); // o "/"
 }

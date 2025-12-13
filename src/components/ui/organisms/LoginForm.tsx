@@ -1,8 +1,23 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AlertCircle } from "lucide-react";
+
+import { Button } from "@/src/components/ui/atoms/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/atoms/card";
+import { Input } from "@/src/components/ui/atoms/input";
+import { Label } from "@/src/components/ui/atoms/label";
+import { Alert, AlertDescription } from "@/src/components/ui/atoms/alert";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -12,83 +27,87 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+    const r = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
 
-      if (!res.ok) {
-        throw new Error("INVALID_CREDENTIALS");
-      }
+    setLoading(false);
 
-      // Login exitoso
-      router.push("/dashboard");
-      router.refresh();
-    } catch {
+    if (!r.ok) {
       setError("Invalid email or password");
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    router.push("/dashboard");
+    router.refresh();
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Email</label>
-        <input
-          type="email"
-          placeholder="you@email.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
+    <Card className="w-full max-w-md">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl"></CardTitle>
+        <CardDescription>Enter your credentials to access your account.</CardDescription>
+      </CardHeader>
 
-      {/* Password */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Password</label>
-        <input
-          type="password"
-          placeholder="••••••••"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          required
-        />
-      </div>
+      <form onSubmit={submit}>
+        <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-      {/* Error */}
-      {error && (
-        <p className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-      {/* Submit */}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-xl bg-green-600 py-2 font-medium text-white hover:bg-green-700 disabled:opacity-60"
-      >
-        {loading ? "Signing in..." : "Sign in"}
-      </button>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-      {/* Register link */}
-      <p className="text-center text-sm text-gray-500">
-        Don’t have an account?{" "}
-        <Link href="/register" className="font-medium text-green-600 hover:underline">
-          Register
-        </Link>
-      </p>
-    </form>
+          <div className="rounded-xl bg-muted p-3 text-sm">
+            <p className="font-medium">Demo account</p>
+            <p className="text-muted-foreground">test@demo.com / 123456</p>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex flex-col gap-4">
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Logging in..." : "Log in"}
+          </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            {"Don't have an account? "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Register
+            </Link>
+          </p>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }

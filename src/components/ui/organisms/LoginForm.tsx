@@ -25,14 +25,19 @@ export default function LoginForm() {
       });
 
       if (!res.ok) {
-        throw new Error("INVALID_CREDENTIALS");
+        // intenta leer mensaje del backend
+        let message = "Invalid email or password";
+        try {
+          const data = await res.json();
+          message = data?.message ?? data?.error ?? message;
+        } catch {}
+        throw new Error(message);
       }
 
-      // Login exitoso
       router.push("/dashboard");
       router.refresh();
-    } catch {
-      setError("Invalid email or password");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
@@ -40,7 +45,6 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Email */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700">Email</label>
         <input
@@ -53,7 +57,6 @@ export default function LoginForm() {
         />
       </div>
 
-      {/* Password */}
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700">Password</label>
         <input
@@ -66,14 +69,8 @@ export default function LoginForm() {
         />
       </div>
 
-      {/* Error */}
-      {error && (
-        <p className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {/* Submit */}
       <button
         type="submit"
         disabled={loading}
@@ -82,7 +79,6 @@ export default function LoginForm() {
         {loading ? "Signing in..." : "Sign in"}
       </button>
 
-      {/* Register link */}
       <p className="text-center text-sm text-gray-500">
         Don’t have an account?{" "}
         <Link href="/register" className="font-medium text-green-600 hover:underline">

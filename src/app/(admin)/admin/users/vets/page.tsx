@@ -7,7 +7,7 @@ import { Input } from "@/src/components/ui/molecules/input";
 import { Badge } from "@/src/components/ui/atoms/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
 import type { VetClinic, VetClinicStatus } from "@/src/types/users.types";
-import { mockClinics } from "@/src/core/admin/users.mock";
+import { mockClinics } from "@/src/core/admin/users.service";
 
 
 function statusBadge(status: VetClinicStatus) {

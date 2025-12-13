@@ -1,27 +1,20 @@
 import { NextResponse } from "next/server";
+import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json(); // { name, email, password }
+  if (!BASE_URL) return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
 
-    // Mock validation (mínimo)
-    if (!body?.email || !body?.password) {
-      return NextResponse.json(
-        { ok: false, message: "Missing fields" },
-        { status: 400 }
-      );
-    }
+  const body = await req.json();
 
-    // TODO: en el futuro:
-    // 1) llamar backend real /auth/register
-    // 2) guardar usuario en BDD
-    // 3) opcional: devolver token y setear cookie
+  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.register}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json(
-      { ok: false, message: "Bad request" },
-      { status: 400 }
-    );
-  }
+  const data = await res.json().catch(() => ({}));
+
+  return NextResponse.json(data, { status: res.status });
 }

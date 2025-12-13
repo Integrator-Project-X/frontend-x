@@ -1,9 +1,4 @@
 export const AUTH_COOKIES = {
-  accessToken: "access_token",
-  role: "user_role",
-} as const;
-
-export const MOCK_CREDENTIALS = {
-  email: "test@demo.com",
-  password: "123456",
+  token: "vc_token",
+  role: "vc_role", // opcional
 } as const;

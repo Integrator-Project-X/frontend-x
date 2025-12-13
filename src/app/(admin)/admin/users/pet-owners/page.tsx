@@ -8,7 +8,7 @@ import { Badge } from "@/src/components/ui/atoms/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
 
 import type { PetOwner, PetOwnerStatus } from "@/src/types/users.types";
-import { mockPetOwners } from "@/src/core/admin/users.mock";
+import { mockPetOwners } from "@/src/core/admin/users.service";
 
 function statusBadge(status: PetOwnerStatus) {
     if (status === "ACTIVE") return <Badge variant="default">Activo</Badge>;

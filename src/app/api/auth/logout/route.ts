@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { clearAuthCookies } from "@/src/core/auth/auth.cookies";
+import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 
 export async function POST() {
-  await clearAuthCookies();
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+
+  res.cookies.set(AUTH_COOKIES.token, "", { path: "/", maxAge: 0 });
+  res.cookies.set(AUTH_COOKIES.role, "", { path: "/", maxAge: 0 });
+
+  return res;
 }

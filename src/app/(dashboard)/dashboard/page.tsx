@@ -1,14 +1,14 @@
+import { redirect } from "next/navigation";
 import { requireAuth } from "@/src/core/auth/auth.guards";
-import LogoutButton from "@/src/components/ui/atoms/LogoutButton";
+import { getUserRole } from "@/src/core/auth/auth.cookies";
 
 export default async function DashboardPage() {
   await requireAuth();
+  const role = await getUserRole();
 
-  return (
-    <main className="space-y-4">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
-      <p>Estás logueado ✅</p>
-      <LogoutButton />
-    </main>
-  );
+  if (role === "ADMIN") redirect("/admin");
+  if (role === "CLINIC") redirect("/clinic"); // futuro
+  if (role === "OWNER") redirect("/owner");   // futuro
+
+  redirect("/login");
 }

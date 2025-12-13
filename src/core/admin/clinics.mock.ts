@@ -1,0 +1,48 @@
+import type { VerificationClinic } from "@/src/types/clinics.types";
+
+export const mockVerificationClinics: VerificationClinic[] = [
+  {
+    id: "v1",
+    clinicName: "VetCare 24/7",
+    email: "hello@vetcare.com",
+    city: "Bogotá",
+    submittedAt: "2025-12-12",
+    status: "PENDING",
+    docsProvided: true,
+    locationProvided: true,
+    visibilityEnabled: false,
+  },
+  {
+    id: "v2",
+    clinicName: "CostaVet",
+    email: "admin@costavet.com",
+    city: "Barranquilla",
+    submittedAt: "2025-12-10",
+    status: "PENDING",
+    docsProvided: false,
+    locationProvided: true,
+    visibilityEnabled: false,
+  },
+  {
+    id: "v3",
+    clinicName: "Animalia Center",
+    email: "info@animalia.com",
+    city: "Medellín",
+    submittedAt: "2025-12-01",
+    status: "APPROVED",
+    docsProvided: true,
+    locationProvided: true,
+    visibilityEnabled: true,
+  },
+  {
+    id: "v4",
+    clinicName: "Paws & Co",
+    email: "contact@pawsco.com",
+    city: "Cali",
+    submittedAt: "2025-11-28",
+    status: "REJECTED",
+    docsProvided: false,
+    locationProvided: false,
+    visibilityEnabled: false,
+  },
+];

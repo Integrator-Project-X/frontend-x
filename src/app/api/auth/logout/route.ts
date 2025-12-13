@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 
 export async function POST() {
-  const res = NextResponse.json({ ok: true });
+  const cookieStore = await cookies();
 
-  res.cookies.set(AUTH_COOKIES.token, "", { path: "/", maxAge: 0 });
-  res.cookies.set(AUTH_COOKIES.role, "", { path: "/", maxAge: 0 });
+  cookieStore.set(AUTH_COOKIES.token, "", { path: "/", maxAge: 0 });
+  cookieStore.set(AUTH_COOKIES.role, "", { path: "/", maxAge: 0 });
+  cookieStore.set(AUTH_COOKIES.userId, "", { path: "/", maxAge: 0 });
+  cookieStore.set(AUTH_COOKIES.accessId, "", { path: "/", maxAge: 0 });
 
-  return res;
+  return NextResponse.json({ ok: true });
 }

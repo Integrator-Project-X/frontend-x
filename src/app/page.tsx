@@ -1,19 +1,13 @@
-import Contact from "../components/ui/organisms/contact";
-import AboutUs from "../components/ui/organisms/aboutUs";
-import Services from "../components/ui/organisms/services";
-import Hero from "../components/ui/organisms/hero";
-import Testimonials from "../components/ui/organisms/testimonials";
-
+import Link from "next/link";
+import Image from "next/image";
+import vetImg from "@/public/image.png";
+import { Clock, Siren, Bell, Calendar, Heart, Search, AlertTriangle, User, MapPin } from "lucide-react";
 
 
 export default function Home() {
   return (
     <>
-      <Hero/>
-      <AboutUs/>
-      <Services/>
-      <Testimonials/>      
-      <Contact/>
+      hola mundo
     </>
   );
 }

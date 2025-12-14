@@ -1,28 +1,17 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Ban } from "lucide-react";
+import { Search, Ban, Plus, Pencil } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/src/components/ui/atoms/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/atoms/card";
 import { Button } from "@/src/components/ui/atoms/button";
 import { Input } from "@/src/components/ui/molecules/input";
 import { Badge } from "@/src/components/ui/atoms/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/src/components/ui/atoms/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
 
 import type { AdminGenderRow } from "@/src/types/masterdata.types";
 import { getGenders, deactivateGender } from "@/src/core/masterdata/masterdata.service";
+
+import GenderClientActions from "@/src/components/ui/organisms/GenderClientActions";
 
 type SearchParams = {
   q?: string;
@@ -60,13 +49,16 @@ export default async function GendersPage({ searchParams }: Props) {
   if (status === "active") filtered = filtered.filter((r) => r.isActive);
   if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
 
-  if (q) filtered = filtered.filter((r) => r.name.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((r) => (r.name ?? "").toLowerCase().includes(q));
 
   async function deactivateAction(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
     if (!id) return;
+
+    // ✅ soft delete (DELETE /genders/soft/:id) detrás de tu service
     await deactivateGender(id);
+
     revalidatePath("/admin/master-data/genders");
   }
 
@@ -78,9 +70,18 @@ export default async function GendersPage({ searchParams }: Props) {
           <p className="text-muted-foreground">Master table control.</p>
         </div>
 
-        <Button asChild variant="outline">
-          <Link href="/admin">Back to Admin</Link>
-        </Button>
+        <div className="flex gap-2">
+          <GenderClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New gender
+            </Button>
+          </GenderClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin">Back to Admin</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -143,6 +144,13 @@ export default async function GendersPage({ searchParams }: Props) {
 
                     <TableCell className="text-right">
                       <div className="inline-flex gap-2">
+                        <GenderClientActions mode="edit" gender={{ id: r.id, name: r.name, isActive: r.isActive }}>
+                          <Button variant="outline" size="sm">
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </GenderClientActions>
+
                         {!r.isActive ? (
                           <Button variant="outline" size="sm" disabled>
                             Inactive
@@ -165,8 +173,10 @@ export default async function GendersPage({ searchParams }: Props) {
           </Table>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /genders</span> · action{" "}
-            <span className="font-mono">PATCH /genders/soft/:id</span>
+            Backend: <span className="font-mono">GET /genders</span> · actions{" "}
+            <span className="font-mono">POST /genders</span> ·{" "}
+            <span className="font-mono">PATCH /genders/:id</span> ·{" "}
+            <span className="font-mono">DELETE /genders/soft/:id</span>
           </p>
         </CardContent>
       </Card>

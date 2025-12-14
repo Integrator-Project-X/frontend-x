@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Search, Eye } from "lucide-react";
+import { Search } from "lucide-react";
 
 import {
   Card,
@@ -24,6 +24,8 @@ import {
 import type { AdminPetRow } from "@/src/types/pets.types";
 import { getPets } from "@/src/core/pets/pets.service";
 
+import PetViewButton from "@/src/components/ui/organisms/PetViewButton";
+
 type PetsSearchParams = {
   q?: string;
   status?: "all" | "active" | "inactive";
@@ -39,11 +41,7 @@ function safeStatus(value?: string): "all" | "active" | "inactive" {
   return "all";
 }
 
-function buildHref(
-  q: string,
-  status: "all" | "active" | "inactive",
-  animal: string
-) {
+function buildHref(q: string, status: "all" | "active" | "inactive", animal: string) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   params.set("status", status);
@@ -53,11 +51,7 @@ function buildHref(
 }
 
 function statusBadge(isActive: boolean) {
-  return isActive ? (
-    <Badge variant="default">Active</Badge>
-  ) : (
-    <Badge variant="destructive">Inactive</Badge>
-  );
+  return isActive ? <Badge variant="default">Active</Badge> : <Badge variant="destructive">Inactive</Badge>;
 }
 
 function formatDate(iso?: string) {
@@ -90,12 +84,10 @@ export default async function PetsPage({ searchParams }: PageProps) {
 
   const pets = await getPets();
 
-  // dropdown animals
   const animalOptions = Array.from(
     new Set(pets.map((p) => (p.animalName ?? "").trim()).filter(Boolean))
   );
 
-  // filters
   let filtered: AdminPetRow[] = [...pets];
 
   if (status === "active") filtered = filtered.filter((p) => !!p.isActive);
@@ -146,11 +138,7 @@ export default async function PetsPage({ searchParams }: PageProps) {
 
         <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           {/* Search */}
-          <form
-            className="relative w-full md:max-w-md"
-            action="/admin/users/pets"
-            method="GET"
-          >
+          <form className="relative w-full md:max-w-md" action="/admin/users/pets" method="GET">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               name="q"
@@ -163,36 +151,20 @@ export default async function PetsPage({ searchParams }: PageProps) {
           </form>
 
           <div className="flex flex-wrap gap-2 items-center">
-            <Button
-              asChild
-              variant={status === "all" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild variant={status === "all" ? "secondary" : "outline"} size="sm">
               <Link href={buildHref(qRaw, "all", animal)}>All</Link>
             </Button>
 
-            <Button
-              asChild
-              variant={status === "active" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild variant={status === "active" ? "secondary" : "outline"} size="sm">
               <Link href={buildHref(qRaw, "active", animal)}>Active</Link>
             </Button>
 
-            <Button
-              asChild
-              variant={status === "inactive" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild variant={status === "inactive" ? "secondary" : "outline"} size="sm">
               <Link href={buildHref(qRaw, "inactive", animal)}>Inactive</Link>
             </Button>
 
-            {/* Animal filter (server-safe) */}
-            <form
-              action="/admin/users/pets"
-              method="GET"
-              className="ml-2 flex items-center"
-            >
+            {/* Animal filter */}
+            <form action="/admin/users/pets" method="GET" className="ml-2 flex items-center">
               <input type="hidden" name="q" value={qRaw} />
               <input type="hidden" name="status" value={status} />
 
@@ -276,24 +248,14 @@ export default async function PetsPage({ searchParams }: PageProps) {
                         </div>
                       </TableCell>
 
-                      <TableCell className="text-muted-foreground">
-                        {p.animalName || "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {p.raceName || "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDate(p.birthDate)}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{p.animalName || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{p.raceName || "—"}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(p.birthDate)}</TableCell>
                       <TableCell>{statusBadge(!!p.isActive)}</TableCell>
 
+                      {/* ✅ ACTIONS: Modal */}
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/admin/users/pets/${p.id}`}>
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Link>
-                        </Button>
+                        <PetViewButton pet={p} />
                       </TableCell>
                     </TableRow>
                   );

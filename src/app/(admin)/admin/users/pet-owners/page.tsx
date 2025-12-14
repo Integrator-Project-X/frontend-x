@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Eye, Ban, RefreshCcw } from "lucide-react";
+import { Search, Ban, RefreshCcw } from "lucide-react";
 
 import {
   Card,
@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/src/components/ui/atoms/table";
 
+import UserViewButton from "@/src/components/ui/organisms/UserViewButton";
+
 import type { BackendUser } from "@/src/types/users.types";
 import {
   getUsersWithRoles,
@@ -33,7 +35,7 @@ type PetOwnersSearchParams = {
   status?: "all" | "active" | "suspended";
 };
 
-// ✅ Roles que consideramos "Pet Owner"
+// ✅ Pet Owners = CLIENT
 const PET_OWNER_ROLES = new Set(["CLIENT"]);
 
 function normalizeRole(u: BackendUser) {
@@ -73,7 +75,6 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
 
   const users = await getUsersWithRoles();
 
-  // ✅ Ahora filtra por CLIENT (y soporta otros por si acaso)
   let petOwners = users.filter((u) => PET_OWNER_ROLES.has(normalizeRole(u)));
 
   if (status === "active") petOwners = petOwners.filter((u) => u.isActive !== false);
@@ -123,13 +124,24 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by name or email (server-side via query params).</CardDescription>
+          <CardDescription>
+            Search by name or email (server-side via query params).
+          </CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/users/pet-owners" method="GET">
+          <form
+            className="relative w-full md:max-w-md"
+            action="/admin/users/pet-owners"
+            method="GET"
+          >
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search name or email..." />
+            <Input
+              name="q"
+              defaultValue={qRaw}
+              className="pl-9"
+              placeholder="Search name or email..."
+            />
             <input type="hidden" name="status" value={status} />
           </form>
 
@@ -195,12 +207,8 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
 
                       <TableCell className="text-right">
                         <div className="inline-flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/users/pet-owners/${u.id}`}>
-                              <Eye className="h-4 w-4" />
-                              View
-                            </Link>
-                          </Button>
+                          {/* ✅ View abre modal (no navega -> no 404) */}
+                          <UserViewButton user={u} />
 
                           {active ? (
                             <form action={suspendAction}>

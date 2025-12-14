@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Eye, Ban, RefreshCcw } from "lucide-react";
+import { Search, Ban, RefreshCcw } from "lucide-react";
 
 import {
   Card,
@@ -28,12 +28,15 @@ import {
   restoreUser,
 } from "@/src/core/users/users.service";
 
+import UserViewButton from "@/src/components/ui/organisms/UserViewButton";
+
 type VetsSearchParams = {
   q?: string;
   status?: "all" | "active" | "suspended";
 };
 
-const VET_ROLES = new Set(["VET"]); // tu backend usa role_name = VET
+// ✅ tu backend usa role_name = VET
+const VET_ROLES = new Set(["VET"]);
 
 function normalizeRole(u: BackendUser) {
   return (u.roleName ?? "").toString().trim().toUpperCase();
@@ -105,7 +108,6 @@ export default async function VetsPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Vets</h1>
@@ -119,7 +121,6 @@ export default async function VetsPage({ searchParams }: PageProps) {
         </Button>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
@@ -149,7 +150,6 @@ export default async function VetsPage({ searchParams }: PageProps) {
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">List</CardTitle>
@@ -196,12 +196,8 @@ export default async function VetsPage({ searchParams }: PageProps) {
 
                       <TableCell className="text-right">
                         <div className="inline-flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/users/vets/${u.id}`}>
-                              <Eye className="h-4 w-4" />
-                              View
-                            </Link>
-                          </Button>
+                          {/* ✅ VIEW = MODAL */}
+                          <UserViewButton user={u} />
 
                           {active ? (
                             <form action={suspendAction}>
@@ -228,12 +224,6 @@ export default async function VetsPage({ searchParams }: PageProps) {
               )}
             </TableBody>
           </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /access</span> (role_name = VET) +{" "}
-            <span className="font-mono">PATCH /users/:id/deactivate</span> /{" "}
-            <span className="font-mono">PATCH /users/:id/restore</span>.
-          </p>
         </CardContent>
       </Card>
     </div>

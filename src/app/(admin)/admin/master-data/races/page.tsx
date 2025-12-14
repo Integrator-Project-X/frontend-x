@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Ban } from "lucide-react";
+import { Search, Ban, Plus, Pencil } from "lucide-react";
 
 import {
   Card,
@@ -23,6 +23,8 @@ import {
 
 import type { AdminRaceRow } from "@/src/types/masterdata.types";
 import { getRaces, deactivateRace } from "@/src/core/masterdata/masterdata.service";
+
+import RacesClientActions from "@/src/components/ui/organisms/RacesClientActions";
 
 type SearchParams = {
   q?: string;
@@ -56,10 +58,8 @@ export default async function RacesPage({ searchParams }: Props) {
   const rows = await getRaces();
 
   let filtered: AdminRaceRow[] = [...rows];
-
   if (status === "active") filtered = filtered.filter((r) => r.isActive);
   if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
-
   if (q) filtered = filtered.filter((r) => r.raceName.toLowerCase().includes(q));
 
   async function deactivateAction(formData: FormData) {
@@ -78,9 +78,18 @@ export default async function RacesPage({ searchParams }: Props) {
           <p className="text-muted-foreground">Master table control.</p>
         </div>
 
-        <Button asChild variant="outline">
-          <Link href="/admin">Back to Admin</Link>
-        </Button>
+        <div className="flex gap-2">
+          <RacesClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New race
+            </Button>
+          </RacesClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin">Back to Admin</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -142,19 +151,28 @@ export default async function RacesPage({ searchParams }: Props) {
                     <TableCell>{statusBadge(r.isActive)}</TableCell>
 
                     <TableCell className="text-right">
-                      {!r.isActive ? (
-                        <Button variant="outline" size="sm" disabled>
-                          Inactive
-                        </Button>
-                      ) : (
-                        <form action={deactivateAction}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <Button variant="destructive" size="sm" type="submit">
-                            <Ban className="h-4 w-4" />
-                            Deactivate
+                      <div className="inline-flex gap-2">
+                        <RacesClientActions mode="edit" race={{ id: r.id, raceName: r.raceName, isActive: r.isActive }}>
+                          <Button variant="outline" size="sm">
+                            <Pencil className="h-4 w-4" />
+                            Edit
                           </Button>
-                        </form>
-                      )}
+                        </RacesClientActions>
+
+                        {!r.isActive ? (
+                          <Button variant="outline" size="sm" disabled>
+                            Inactive
+                          </Button>
+                        ) : (
+                          <form action={deactivateAction}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <Button variant="destructive" size="sm" type="submit">
+                              <Ban className="h-4 w-4" />
+                              Deactivate
+                            </Button>
+                          </form>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

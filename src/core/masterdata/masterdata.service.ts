@@ -11,18 +11,22 @@ import type {
   AdminClinicScheduleRow,
 } from "@/src/types/masterdata.types";
 
-function unwrapList<T>(json: any): T[] {
-  if (Array.isArray(json)) return json as T[];
-  if (Array.isArray(json?.data)) return json.data as T[];
-  // por si te devuelven un solo objeto en data
-  if (json?.data && typeof json.data === "object") return [json.data as T];
+/**
+ * apiServer ya hace unwrap de { success, data } => data
+ * pero dejamos este helper por compatibilidad si algún fetch devuelve wrapper.
+ */
+function unwrapList<T>(payload: any): T[] {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload as T[];
+  if (Array.isArray(payload?.data)) return payload.data as T[];
+  if (payload?.data && typeof payload.data === "object") return [payload.data as T];
   return [];
 }
 
 /* ------------------------- GENDERS ------------------------- */
 export async function getGenders(): Promise<AdminGenderRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.genders.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.genders.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((g) => ({
     id: Number(g.id_gender ?? g.id ?? 0),
@@ -33,15 +37,18 @@ export async function getGenders(): Promise<AdminGenderRow[]> {
   }));
 }
 
-// en tu endpoints: genders.softDelete = "/genders/soft/:id"
+/**
+ * Tu UI muestra: PATCH /genders/soft/:id
+ * y tu endpoint es genders.softDelete(id) => /genders/soft/:id
+ */
 export async function deactivateGender(id: string | number) {
   return apiServer.patch(API_ENDPOINTS.genders.softDelete(String(id)));
 }
 
 /* ------------------------- ANIMALS ------------------------- */
 export async function getAnimals(): Promise<AdminAnimalRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.animals.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.animals.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((a) => ({
     id: Number(a.id_animal ?? a.id ?? 0),
@@ -52,14 +59,18 @@ export async function getAnimals(): Promise<AdminAnimalRow[]> {
   }));
 }
 
+/**
+ * OJO: en tus endpoints se llama "deactivate",
+ * pero la URL es /animals/:id/desactivate
+ */
 export async function deactivateAnimal(id: string | number) {
   return apiServer.patch(API_ENDPOINTS.animals.deactivate(String(id)));
 }
 
 /* ------------------------- RACES ------------------------- */
 export async function getRaces(): Promise<AdminRaceRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.races.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.races.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((r) => ({
     id: Number(r.id_race ?? r.id ?? 0),
@@ -70,14 +81,36 @@ export async function getRaces(): Promise<AdminRaceRow[]> {
   }));
 }
 
+export async function getRaceById(id: string | number): Promise<AdminRaceRow | null> {
+  const r = await apiServer.get<any>(API_ENDPOINTS.races.byId(String(id)));
+  if (!r) return null;
+
+  return {
+    id: Number(r.id_race ?? r.id ?? 0),
+    raceName: String(r.race_name ?? r.name ?? ""),
+    isActive: Boolean(r.isActive ?? r.is_active ?? true),
+    createdAt: r.createdAt ?? null,
+    updatedAt: r.updatedAt ?? null,
+  };
+}
+
+export async function createRace(payload: { race_name: string; isActive?: boolean }) {
+  return apiServer.post(API_ENDPOINTS.races.create, payload);
+}
+
+export async function updateRace(id: string | number, payload: { race_name?: string; isActive?: boolean }) {
+  return apiServer.patch(API_ENDPOINTS.races.update(String(id)), payload);
+}
+
 export async function deactivateRace(id: string | number) {
+  // OJO: tu endpoint se llama "deactivate" pero URL termina en /desactivate
   return apiServer.patch(API_ENDPOINTS.races.deactivate(String(id)));
 }
 
 /* ------------------------- ROLES ------------------------- */
 export async function getRoles(): Promise<AdminRoleRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.roles.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.roles.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((r) => ({
     id: Number(r.id_role ?? r.id ?? 0),
@@ -94,8 +127,8 @@ export async function deactivateRole(id: string | number) {
 
 /* --------------------- MEDICAL RECORDS --------------------- */
 export async function getMedicalRecords(): Promise<AdminMedicalRecordRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.medicalRecords.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.medicalRecords.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((m) => ({
     id: Number(m.id_medical_record ?? m.id ?? 0),
@@ -105,15 +138,14 @@ export async function getMedicalRecords(): Promise<AdminMedicalRecordRow[]> {
   }));
 }
 
-// en tu endpoints: medicalRecords.delete = DELETE /medical-records/:id
 export async function deleteMedicalRecord(id: string | number) {
   return apiServer.delete(API_ENDPOINTS.medicalRecords.delete(String(id)));
 }
 
 /* ------------------- CLINIC SCHEDULES ------------------- */
 export async function getClinicSchedules(): Promise<AdminClinicScheduleRow[]> {
-  const json = await apiServer.get<any>(API_ENDPOINTS.clinicSchedules.list);
-  const list = unwrapList<any>(json);
+  const raw = await apiServer.get<any>(API_ENDPOINTS.clinicSchedules.list);
+  const list = unwrapList<any>(raw);
 
   return list.map((s) => ({
     id: Number(s.id_clinic_schedule ?? s.id ?? 0),

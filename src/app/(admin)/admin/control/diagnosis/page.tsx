@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Plus, Pencil } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/atoms/card";
 import { Button } from "@/src/components/ui/atoms/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/src/components/ui/atoms/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
 
 import { getDiagnosis, deleteDiagnosis } from "@/src/core/control/diagnosis/diagnosis.service";
+import DiagnosisClientActions from "@/src/components/ui/organisms/DiagnosisClientActions";
 
 type SP = { q?: string; status?: "all" | "active" | "inactive" };
 
@@ -28,6 +29,23 @@ function buildHref(q: string, status: "all" | "active" | "inactive") {
   return `/admin/control/diagnosis?${p.toString()}`;
 }
 
+// getters robustos (por si te llega id_diagnosis/personal/user/jobPosition)
+function rowId(r: any) {
+  return Number(r?.id ?? r?.id_diagnosis ?? 0);
+}
+function rowDesc(r: any) {
+  return String(r?.description ?? r?.diagnosisName ?? "").trim();
+}
+function rowActive(r: any) {
+  return Boolean(r?.isActive ?? r?.is_active ?? false);
+}
+function rowVetName(r: any) {
+  return String(r?.vetName ?? r?.personal?.user?.full_name ?? "—");
+}
+function rowVetJob(r: any) {
+  return String(r?.vetJob ?? r?.personal?.jobPosition?.job_position_name ?? "—");
+}
+
 export default async function DiagnosisPage({ searchParams }: { searchParams?: SP | Promise<SP> }) {
   const sp = await Promise.resolve(searchParams ?? {});
   const qRaw = (sp.q ?? "").trim();
@@ -37,12 +55,12 @@ export default async function DiagnosisPage({ searchParams }: { searchParams?: S
   const rows = await getDiagnosis();
 
   let filtered = [...rows];
-  if (status === "active") filtered = filtered.filter((r) => r.isActive);
-  if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
+  if (status === "active") filtered = filtered.filter((r: any) => rowActive(r));
+  if (status === "inactive") filtered = filtered.filter((r: any) => !rowActive(r));
 
   if (q) {
-    filtered = filtered.filter((r) => {
-      const hay = [r.description, r.vetName, r.vetJob].join(" ").toLowerCase();
+    filtered = filtered.filter((r: any) => {
+      const hay = [rowDesc(r), rowVetName(r), rowVetJob(r)].join(" ").toLowerCase();
       return hay.includes(q);
     });
   }
@@ -51,7 +69,7 @@ export default async function DiagnosisPage({ searchParams }: { searchParams?: S
     "use server";
     const id = String(fd.get("id") ?? "");
     if (!id) return;
-    await deleteDiagnosis(id);
+    await deleteDiagnosis(id); // DELETE /diagnosis/:id (soft-delete)
     revalidatePath("/admin/control/diagnosis");
   }
 
@@ -62,9 +80,19 @@ export default async function DiagnosisPage({ searchParams }: { searchParams?: S
           <h1 className="text-2xl font-semibold">Diagnosis</h1>
           <p className="text-muted-foreground">Master table control.</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/admin">Back</Link>
-        </Button>
+
+        <div className="flex gap-2">
+          <DiagnosisClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New diagnosis
+            </Button>
+          </DiagnosisClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin/control">Back</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -119,38 +147,59 @@ export default async function DiagnosisPage({ searchParams }: { searchParams?: S
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-muted-foreground">{r.id}</TableCell>
-                    <TableCell className="font-medium">{r.description}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <p>{r.vetName}</p>
-                        <p className="text-xs text-muted-foreground">{r.vetJob}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{badge(r.isActive)}</TableCell>
-                    <TableCell className="text-right">
-                      <form action={deleteAction}>
-                        <input type="hidden" name="id" value={r.id} />
-                        <Button size="sm" variant="destructive" type="submit">
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </Button>
-                      </form>
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((r: any) => {
+                  const id = rowId(r);
+                  const desc = rowDesc(r);
+                  const vetName = rowVetName(r);
+                  const vetJob = rowVetJob(r);
+                  const isActive = rowActive(r);
+
+                  return (
+                    <TableRow key={id}>
+                      <TableCell className="text-muted-foreground">{id}</TableCell>
+                      <TableCell className="font-medium">{desc}</TableCell>
+
+                      <TableCell className="text-muted-foreground">
+                        <div className="space-y-0.5">
+                          <p>{vetName}</p>
+                          <p className="text-xs text-muted-foreground">{vetJob}</p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>{badge(isActive)}</TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-2">
+                          <DiagnosisClientActions mode="edit" diagnosisId={id}>
+                            <Button size="sm" variant="outline">
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </Button>
+                          </DiagnosisClientActions>
+
+                          <form action={deleteAction}>
+                            <input type="hidden" name="id" value={id} />
+                            <Button size="sm" variant="destructive" type="submit">
+                              <Trash2 className="h-4 w-4" />
+                              Delete
+                            </Button>
+                          </form>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
 
           <p className="mt-3 text-xs text-muted-foreground">
             Backend: <span className="font-mono">GET /diagnosis</span> · action{" "}
-            <span className="font-mono">DELETE /diagnosis/:id</span>
+            <span className="font-mono">DELETE /diagnosis/:id</span> (soft-delete)
           </p>
         </CardContent>
       </Card>
     </div>
   );
 }
+

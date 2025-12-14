@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Eye, Ban } from "lucide-react";
+import { Search, Ban } from "lucide-react";
 
 import {
   Card,
@@ -27,6 +27,9 @@ import {
   deactivateAppointment,
 } from "@/src/core/appointments/appointments.service";
 
+// ✅ NUEVO: botón que abre modal
+import AppointmentViewButton from "@/src/components/ui/organisms/AppointmentViewButton";
+
 type AppointmentsSearchParams = {
   q?: string;
   state?: "all" | "active" | "inactive"; // isActive
@@ -39,13 +42,20 @@ function safeState(value?: string): "all" | "active" | "inactive" {
   return "all";
 }
 
-function buildHref(q: string, state: "all" | "active" | "inactive", animal: string, type: string) {
+function buildHref(
+  q: string,
+  state: "all" | "active" | "inactive",
+  animal: string,
+  type: string
+) {
   const params = new URLSearchParams();
   if (q) params.set("q", q);
   params.set("state", state);
   if (animal && animal !== "all") params.set("animal", animal);
   if (type && type !== "all") params.set("type", type);
-  return `/admin/appointments?${params.toString()}`;
+
+  const qs = params.toString();
+  return qs ? `/admin/appointments?${qs}` : "/admin/appointments";
 }
 
 function stateBadge(isActive: boolean) {
@@ -94,7 +104,7 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
 
   let filtered: AdminAppointmentRow[] = [...appointments];
 
-  if (state === "active") filtered = filtered.filter((a) => a.isActive);
+  if (state === "active") filtered = filtered.filter((a) => !!a.isActive);
   if (state === "inactive") filtered = filtered.filter((a) => !a.isActive);
 
   if (animal !== "all") {
@@ -131,7 +141,7 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
   }
 
   const total = filtered.length;
-  const activeCount = filtered.filter((a) => a.isActive).length;
+  const activeCount = filtered.filter((a) => !!a.isActive).length;
   const inactiveCount = total - activeCount;
 
   async function deactivateAction(formData: FormData) {
@@ -184,7 +194,11 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/appointments" method="GET">
+          <form
+            className="relative w-full md:max-w-md"
+            action="/admin/appointments"
+            method="GET"
+          >
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
             <input type="hidden" name="state" value={state} />
@@ -291,7 +305,9 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
                     <TableCell>
                       <div className="space-y-0.5">
                         <p className="font-medium">#{a.id}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{a.description}</p>
+                        <p className="text-xs text-muted-foreground line-clamp-1">
+                          {a.description}
+                        </p>
                       </div>
                     </TableCell>
 
@@ -322,17 +338,18 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
 
                     <TableCell className="text-muted-foreground">{a.typeName}</TableCell>
                     <TableCell className="text-muted-foreground">{a.statusName}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDateTime(a.createdAt)}</TableCell>
-                    <TableCell>{stateBadge(a.isActive)}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDateTime(a.createdAt)}
+                    </TableCell>
+                    <TableCell>{stateBadge(!!a.isActive)}</TableCell>
 
                     <TableCell className="text-right">
                       <div className="inline-flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/admin/appointments/${a.id}`}>
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Link>
-                        </Button>
+                        {/* ✅ View abre modal (no redirección) */}
+                        <AppointmentViewButton
+                          appointmentId={a.id}
+                          summary={{ isActive: a.isActive }}
+                        />
 
                         {a.isActive ? (
                           <form action={deactivateAction}>

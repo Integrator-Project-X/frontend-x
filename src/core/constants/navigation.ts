@@ -23,9 +23,9 @@ export const adminNavigation = [
     ],
   },
   {
-    section: "Clinic Verification",
+    section: "Clinics Management",
     items: [
-      { label: "Aprove vets", href: "/admin/clinics/verification", icon: ShieldCheck },
+      { label: "Clinics", href: "/admin/clinics/verification", icon: ShieldCheck },
     ],
   },
   {

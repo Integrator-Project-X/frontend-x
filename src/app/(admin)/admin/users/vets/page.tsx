@@ -1,58 +1,150 @@
 import Link from "next/link";
-import { Search, ShieldCheck, Eye, Ban, CheckCircle2 } from "lucide-react";
+import { revalidatePath } from "next/cache";
+import { Search, Eye, Ban, RefreshCcw } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/atoms/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/src/components/ui/atoms/card";
 import { Button } from "@/src/components/ui/atoms/button";
 import { Input } from "@/src/components/ui/molecules/input";
 import { Badge } from "@/src/components/ui/atoms/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
-import type { VetClinic, VetClinicStatus } from "@/src/types/users.types";
-import { mockClinics } from "@/src/core/admin/users.service";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui/atoms/table";
 
+import type { BackendUser } from "@/src/types/users.types";
+import {
+  getUsersWithRoles,
+  deactivateUser,
+  restoreUser,
+} from "@/src/core/users/users.service";
 
-function statusBadge(status: VetClinicStatus) {
-  if (status === "ACTIVE") return <Badge variant="default">Activo</Badge>;
-  if (status === "SUSPENDED") return <Badge variant="destructive">Suspendido</Badge>;
-  return <Badge variant="secondary">Pendiente</Badge>;
+type VetsSearchParams = {
+  q?: string;
+  status?: "all" | "active" | "suspended";
+};
+
+const VET_ROLES = new Set(["VET"]); // tu backend usa role_name = VET
+
+function normalizeRole(u: BackendUser) {
+  return (u.roleName ?? "").toString().trim().toUpperCase();
 }
 
-export default function VetsPage() {
+function statusBadge(isActive?: boolean) {
+  return isActive === false ? (
+    <Badge variant="destructive">Suspended</Badge>
+  ) : (
+    <Badge variant="default">Active</Badge>
+  );
+}
+
+function safeStatus(value?: string): "all" | "active" | "suspended" {
+  if (value === "active" || value === "suspended" || value === "all") return value;
+  return "all";
+}
+
+function buildHref(q: string, status: "all" | "active" | "suspended") {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  params.set("status", status);
+  return `/admin/users/vets?${params.toString()}`;
+}
+
+type PageProps = {
+  searchParams?: VetsSearchParams | Promise<VetsSearchParams>;
+};
+
+export default async function VetsPage({ searchParams }: PageProps) {
+  const sp = await Promise.resolve(searchParams ?? {});
+
+  const qRaw = (sp.q ?? "").trim();
+  const q = qRaw.toLowerCase();
+  const status = safeStatus(sp.status);
+
+  const users = await getUsersWithRoles();
+
+  let vets = users.filter((u) => VET_ROLES.has(normalizeRole(u)));
+
+  if (status === "active") vets = vets.filter((u) => u.isActive !== false);
+  if (status === "suspended") vets = vets.filter((u) => u.isActive === false);
+
+  if (q) {
+    vets = vets.filter((u) => {
+      const name = (u.name ?? "").toLowerCase();
+      const email = (u.email ?? "").toLowerCase();
+      return name.includes(q) || email.includes(q);
+    });
+  }
+
+  const total = vets.length;
+
+  async function suspendAction(formData: FormData) {
+    "use server";
+    const id = String(formData.get("id") ?? "");
+    if (!id) return;
+    await deactivateUser(id);
+    revalidatePath("/admin/users/vets");
+  }
+
+  async function restoreAction(formData: FormData) {
+    "use server";
+    const id = String(formData.get("id") ?? "");
+    if (!id) return;
+    await restoreUser(id);
+    revalidatePath("/admin/users/vets");
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Veterinarias</h1>
+          <h1 className="text-2xl font-semibold">Vets</h1>
           <p className="text-muted-foreground">
-            Gestiona clínicas registradas, verificación y estado (activo/suspendido).
+            Manage vets (VET), status (active/suspended), and basic access info.
           </p>
         </div>
 
         <Button asChild variant="outline">
-          <Link href="/admin/clinics/verification">
-            <ShieldCheck className="h-4 w-4" />
-            Ver pendientes de verificación
-          </Link>
+          <Link href="/admin/users/pet-owners">Go to Pet Owners</Link>
         </Button>
       </div>
 
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Filtros</CardTitle>
-          <CardDescription>Busca por nombre, correo o ciudad (mock por ahora).</CardDescription>
+          <CardTitle className="text-base">Filters</CardTitle>
+          <CardDescription>Search by name or email (server-side via query params).</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center">
-          <div className="relative w-full md:max-w-md">
+
+        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <form className="relative w-full md:max-w-md" action="/admin/users/vets" method="GET">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Buscar clínica, email o ciudad..." />
-          </div>
+            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search name or email..." />
+            <input type="hidden" name="status" value={status} />
+          </form>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm">Todas</Button>
-            <Button variant="outline" size="sm">Activas</Button>
-            <Button variant="outline" size="sm">Suspendidas</Button>
-            <Button variant="outline" size="sm">Pendientes</Button>
+            <Button asChild variant={status === "all" ? "secondary" : "outline"} size="sm">
+              <Link href={buildHref(qRaw, "all")}>All</Link>
+            </Button>
+
+            <Button asChild variant={status === "active" ? "secondary" : "outline"} size="sm">
+              <Link href={buildHref(qRaw, "active")}>Active</Link>
+            </Button>
+
+            <Button asChild variant={status === "suspended" ? "secondary" : "outline"} size="sm">
+              <Link href={buildHref(qRaw, "suspended")}>Suspended</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -60,73 +152,87 @@ export default function VetsPage() {
       {/* Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Listado</CardTitle>
-          <CardDescription>Vista general de clínicas veterinarias.</CardDescription>
+          <CardTitle className="text-base">List</CardTitle>
+          <CardDescription>{total} result(s)</CardDescription>
         </CardHeader>
 
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Clínica</TableHead>
-                <TableHead>Ciudad</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Verificada</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
-              {mockClinics.map((c) => (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <div className="space-y-0.5">
-                      <p className="font-medium">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.email}</p>
-                    </div>
-                  </TableCell>
-
-                  <TableCell>{c.city}</TableCell>
-
-                  <TableCell>{statusBadge(c.status)}</TableCell>
-
-                  <TableCell>
-                    {c.verified ? (
-                      <span className="inline-flex items-center gap-1 text-sm">
-                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                        Sí
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">No</span>
-                    )}
-                  </TableCell>
-
-                  <TableCell className="text-right">
-                    <div className="inline-flex gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/users/vets/${c.id}`}>
-                          <Eye className="h-4 w-4" />
-                          Ver
-                        </Link>
-                      </Button>
-
-                      {c.status === "SUSPENDED" ? (
-                        <Button variant="secondary" size="sm">Activar</Button>
-                      ) : (
-                        <Button variant="destructive" size="sm">
-                          <Ban className="h-4 w-4" />
-                          Suspender
-                        </Button>
-                      )}
-                    </div>
+              {vets.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-sm text-muted-foreground">
+                    No results found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                vets.map((u) => {
+                  const role = normalizeRole(u);
+                  const active = u.isActive !== false;
+
+                  return (
+                    <TableRow key={u.id}>
+                      <TableCell>
+                        <div className="space-y-0.5">
+                          <p className="font-medium">{u.name ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground">{u.email}</p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell>{statusBadge(u.isActive)}</TableCell>
+
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">{role || "—"}</span>
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/admin/users/vets/${u.id}`}>
+                              <Eye className="h-4 w-4" />
+                              View
+                            </Link>
+                          </Button>
+
+                          {active ? (
+                            <form action={suspendAction}>
+                              <input type="hidden" name="id" value={u.id} />
+                              <Button variant="destructive" size="sm" type="submit">
+                                <Ban className="h-4 w-4" />
+                                Suspend
+                              </Button>
+                            </form>
+                          ) : (
+                            <form action={restoreAction}>
+                              <input type="hidden" name="id" value={u.id} />
+                              <Button variant="secondary" size="sm" type="submit">
+                                <RefreshCcw className="h-4 w-4" />
+                                Restore
+                              </Button>
+                            </form>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Esto es mock. Luego conectamos a backend y estos filtros/acciones serán reales.
+            Backend: <span className="font-mono">GET /access</span> (role_name = VET) +{" "}
+            <span className="font-mono">PATCH /users/:id/deactivate</span> /{" "}
+            <span className="font-mono">PATCH /users/:id/restore</span>.
           </p>
         </CardContent>
       </Card>

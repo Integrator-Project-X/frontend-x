@@ -11,20 +11,59 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function resolveEndpoint(maybe: any, fallback: string) {
+  try {
+    if (typeof maybe === "function") return maybe();
+    if (typeof maybe === "string" && maybe.trim()) return maybe;
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function GET() {
   if (!BASE_URL) {
-    return NextResponse.json(
-      { message: "Missing NEXT_PUBLIC_API_URL" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
   }
 
-  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.appointmentsTypes.list}`, {
+  const endpoint = resolveEndpoint(
+    (API_ENDPOINTS as any)?.appointmentsTypes?.list,
+    "/appointments-types"
+  );
+
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
       ...(await getAuthHeader()),
     },
+    cache: "no-store",
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return NextResponse.json(data, { status: res.status });
+}
+
+export async function POST(req: Request) {
+  if (!BASE_URL) {
+    return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+
+  const endpoint = resolveEndpoint(
+    (API_ENDPOINTS as any)?.appointmentsTypes?.list,
+    "/appointments-types"
+  );
+
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(body),
     cache: "no-store",
   });
 

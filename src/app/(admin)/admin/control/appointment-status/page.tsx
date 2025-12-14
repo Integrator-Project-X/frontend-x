@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Plus, Pencil } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/atoms/card";
 import { Button } from "@/src/components/ui/atoms/button";
@@ -12,6 +12,8 @@ import {
   getAppointmentStatuses,
   softDeleteAppointmentStatus,
 } from "@/src/core/control/appointment-status/appointment-status.service";
+
+import AppointmentStatusClientActions from "@/src/components/ui/organisms/AppointmentStatusClienActions";
 
 type SP = { q?: string; status?: "all" | "active" | "inactive" };
 
@@ -31,6 +33,17 @@ function buildHref(q: string, status: "all" | "active" | "inactive") {
   return `/admin/control/appointment-status?${p.toString()}`;
 }
 
+// Helpers robustos por si tu service no mapea igual
+function rowId(r: any) {
+  return Number(r?.id ?? r?.id_appointment_status ?? 0);
+}
+function rowName(r: any) {
+  return String(r?.name ?? r?.status_name ?? "").trim();
+}
+function rowActive(r: any) {
+  return Boolean(r?.isActive ?? r?.is_active ?? false);
+}
+
 export default async function AppointmentStatusPage({ searchParams }: { searchParams?: SP | Promise<SP> }) {
   const sp = await Promise.resolve(searchParams ?? {});
   const qRaw = (sp.q ?? "").trim();
@@ -40,9 +53,9 @@ export default async function AppointmentStatusPage({ searchParams }: { searchPa
   const rows = await getAppointmentStatuses();
 
   let filtered = [...rows];
-  if (status === "active") filtered = filtered.filter((r) => r.isActive);
-  if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
-  if (q) filtered = filtered.filter((r) => (r.name ?? "").toLowerCase().includes(q));
+  if (status === "active") filtered = filtered.filter((r: any) => rowActive(r));
+  if (status === "inactive") filtered = filtered.filter((r: any) => !rowActive(r));
+  if (q) filtered = filtered.filter((r: any) => rowName(r).toLowerCase().includes(q));
 
   async function softDeleteAction(fd: FormData) {
     "use server";
@@ -59,9 +72,20 @@ export default async function AppointmentStatusPage({ searchParams }: { searchPa
           <h1 className="text-2xl font-semibold">Appointment Status</h1>
           <p className="text-muted-foreground">Master table control.</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/admin">Back</Link>
-        </Button>
+
+        <div className="flex gap-2">
+          {/* ✅ Create modal button */}
+          <AppointmentStatusClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New status
+            </Button>
+          </AppointmentStatusClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin/control">Back</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -114,28 +138,46 @@ export default async function AppointmentStatusPage({ searchParams }: { searchPa
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-muted-foreground">{r.id}</TableCell>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{badge(r.isActive)}</TableCell>
-                    <TableCell className="text-right">
-                      {r.isActive ? (
-                        <form action={softDeleteAction}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <Button size="sm" variant="destructive" type="submit">
-                            <Trash2 className="h-4 w-4" />
-                            Soft delete
-                          </Button>
-                        </form>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled>
-                          Inactive
-                        </Button>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                filtered.map((r: any) => {
+                  const id = rowId(r);
+                  const name = rowName(r);
+                  const isActive = rowActive(r);
+
+                  return (
+                    <TableRow key={id}>
+                      <TableCell className="text-muted-foreground">{id}</TableCell>
+                      <TableCell className="font-medium">{name}</TableCell>
+                      <TableCell>{badge(isActive)}</TableCell>
+
+                      <TableCell className="text-right">
+                        <div className="inline-flex gap-2">
+                          {/* ✅ Edit modal button */}
+                          <AppointmentStatusClientActions mode="edit" statusId={id}>
+                            <Button size="sm" variant="outline">
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </Button>
+                          </AppointmentStatusClientActions>
+
+                          {/* ✅ Soft delete (server action) */}
+                          {isActive ? (
+                            <form action={softDeleteAction}>
+                              <input type="hidden" name="id" value={id} />
+                              <Button size="sm" variant="destructive" type="submit">
+                                <Trash2 className="h-4 w-4" />
+                                Soft delete
+                              </Button>
+                            </form>
+                          ) : (
+                            <Button size="sm" variant="outline" disabled>
+                              Inactive
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>

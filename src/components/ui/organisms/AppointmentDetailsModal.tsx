@@ -11,6 +11,7 @@ type AppointmentTypeRow = {
   id: number;
   name: string;
   is_active?: boolean;
+  isActive?: boolean;
 };
 
 type AppointmentStatusRow = {
@@ -61,6 +62,10 @@ function unwrapArray<T>(payload: any): T[] {
   return Array.isArray(arr) ? (arr as T[]) : [];
 }
 
+function isTruthyActive(v?: boolean) {
+  return v === true;
+}
+
 export default function AppointmentDetailsModal({
   open,
   onClose,
@@ -68,9 +73,10 @@ export default function AppointmentDetailsModal({
   initialIsActive,
 }: Props) {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
 
+  const [loading, setLoading] = useState(false);
   const [details, setDetails] = useState<AppointmentDetails | null>(null);
+
   const [types, setTypes] = useState<AppointmentTypeRow[]>([]);
   const [statuses, setStatuses] = useState<AppointmentStatusRow[]>([]);
 
@@ -87,9 +93,15 @@ export default function AppointmentDetailsModal({
 
   const title = useMemo(() => `Appointment #${appointmentId}`, [appointmentId]);
 
+  // Badges (arriba)
   const badgeState = details?.isActive ?? initialIsActive;
   const badgeStatus = details?.status?.status_name;
   const badgeType = details?.type?.name;
+
+  // Helpers: nombres (mostrar en Inputs disabled)
+  const ownerName = details?.user?.full_name ?? "—";
+  const petName = details?.pet?.pet_name ?? "—";
+  const clinicName = details?.clinic?.clinic_name ?? "—";
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +111,7 @@ export default function AppointmentDetailsModal({
       try {
         setLoading(true);
 
-        // 1) details
+        // 1) Details
         const detailsRes = await fetch(`/api/appointments/${appointmentId}`, {
           cache: "no-store",
         });
@@ -121,6 +133,8 @@ export default function AppointmentDetailsModal({
         }
 
         setDetails(d);
+
+        // Set form from details
         setForm({
           id_pet: Number(d.pet?.id_pet ?? 0),
           id_user: Number(d.user?.id_user ?? 0),
@@ -132,7 +146,7 @@ export default function AppointmentDetailsModal({
           isActive: !!d.isActive,
         });
 
-        // 2) lists
+        // 2) Lists (types + statuses)
         const [typesRes, statusRes] = await Promise.all([
           fetch("/api/appointments-types", { cache: "no-store" }),
           fetch("/api/appointment-status", { cache: "no-store" }),
@@ -154,7 +168,13 @@ export default function AppointmentDetailsModal({
           });
         }
 
-        setTypes(unwrapArray<AppointmentTypeRow>(typesJson));
+        // Normalize types (acepta is_active o isActive)
+        const rawTypes = unwrapArray<AppointmentTypeRow>(typesJson).map((t) => ({
+          ...t,
+          isActive: t.isActive ?? t.is_active,
+        }));
+
+        setTypes(rawTypes);
         setStatuses(unwrapArray<AppointmentStatusRow>(statusJson));
       } catch (e) {
         console.error("Modal load failed", e);
@@ -225,35 +245,32 @@ export default function AppointmentDetailsModal({
             {badgeType ? <Badge variant="secondary">{badgeType}</Badge> : null}
           </div>
 
-          {/* Form */}
+          {/* Nombres en vez de IDs */}
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <div className="text-sm font-medium mb-1">Owner</div>
+              <Input value={ownerName} disabled />
+            </div>
+
+            <div>
+              <div className="text-sm font-medium mb-1">Pet</div>
+              <Input value={petName} disabled />
+            </div>
+
+            <div>
+              <div className="text-sm font-medium mb-1">Clinic</div>
+              <Input value={clinicName} disabled />
+            </div>
+          </div>
+
+          {/* Mantener ids “por debajo” para el PATCH */}
+          <input type="hidden" value={form.id_user} readOnly />
+          <input type="hidden" value={form.id_pet} readOnly />
+          <input type="hidden" value={form.id_clinic} readOnly />
+
+          {/* Form editable */}
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            <div>
-              <div className="text-sm font-medium mb-1">id_pet</div>
-              <Input
-                type="number"
-                value={form.id_pet}
-                onChange={(e) => setForm((p) => ({ ...p, id_pet: Number(e.target.value) }))}
-              />
-            </div>
-
-            <div>
-              <div className="text-sm font-medium mb-1">id_user</div>
-              <Input
-                type="number"
-                value={form.id_user}
-                onChange={(e) => setForm((p) => ({ ...p, id_user: Number(e.target.value) }))}
-              />
-            </div>
-
-            <div>
-              <div className="text-sm font-medium mb-1">id_clinic</div>
-              <Input
-                type="number"
-                value={form.id_clinic}
-                onChange={(e) => setForm((p) => ({ ...p, id_clinic: Number(e.target.value) }))}
-              />
-            </div>
-
+            {/* Appointment type */}
             <div>
               <div className="text-sm font-medium mb-1">Appointment type</div>
               <select
@@ -264,14 +281,27 @@ export default function AppointmentDetailsModal({
                 <option value="" disabled>
                   {types.length ? "Select type..." : "Loading types..."}
                 </option>
-                {types.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
+
+                {types
+                  .filter((t) => isTruthyActive(t.isActive))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
               </select>
+
+              {/* si el actual está inactivo, igual lo mostramos para no “romper” */}
+              {types.length > 0 &&
+              form.id_type &&
+              !types.find((t) => t.id === form.id_type && isTruthyActive(t.isActive)) ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Current type is inactive (kept for consistency).
+                </p>
+              ) : null}
             </div>
 
+            {/* Appointment status */}
             <div>
               <div className="text-sm font-medium mb-1">Appointment status</div>
               <select
@@ -282,6 +312,7 @@ export default function AppointmentDetailsModal({
                 <option value="" disabled>
                   {statuses.length ? "Select status..." : "Loading statuses..."}
                 </option>
+
                 {statuses.map((s) => (
                   <option key={s.id_appointment_status} value={s.id_appointment_status}>
                     {s.status_name}
@@ -290,17 +321,17 @@ export default function AppointmentDetailsModal({
               </select>
             </div>
 
+            {/* Diagnosis id (si lo mantienes editable) */}
             <div>
               <div className="text-sm font-medium mb-1">id_diagnosis</div>
               <Input
                 type="number"
                 value={form.id_diagnosis}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, id_diagnosis: Number(e.target.value) }))
-                }
+                onChange={(e) => setForm((p) => ({ ...p, id_diagnosis: Number(e.target.value) }))}
               />
             </div>
 
+            {/* Description */}
             <div className="md:col-span-2">
               <div className="text-sm font-medium mb-1">description</div>
               <Input
@@ -309,13 +340,12 @@ export default function AppointmentDetailsModal({
               />
             </div>
 
+            {/* isActive */}
             <div className="md:col-span-2">
-              <div className="text-sm font-medium mb-1">isActive</div>
+              <div className="text-sm font-medium mb-1">State</div>
               <select
                 value={form.isActive ? "true" : "false"}
-                onChange={(e) =>
-                  setForm((p) => ({ ...p, isActive: e.target.value === "true" }))
-                }
+                onChange={(e) => setForm((p) => ({ ...p, isActive: e.target.value === "true" }))}
                 className="h-10 w-full rounded-md border bg-white px-3 text-sm"
               >
                 <option value="true">Active</option>

@@ -1,23 +1,44 @@
 import Link from "next/link";
-import { revalidatePath } from "next/cache";
-import { Search, Ban } from "lucide-react";
+import { Search } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/src/components/ui/atoms/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/src/components/ui/atoms/card";
 import { Button } from "@/src/components/ui/atoms/button";
 import { Input } from "@/src/components/ui/molecules/input";
 import { Badge } from "@/src/components/ui/atoms/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/atoms/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui/atoms/table";
 
-import { getAppointmentTypes, deactivateAppointmentType } from "@/src/core/control/appointment-types/appointment-types.service";
+import { getAppointmentTypes } from "@/src/core/control/appointment-types/appointment-types.service";
+import AppointmentTypeRowActions from "@/src/components/ui/organisms/AppointmentTypeRowActions";
+import AppointmentTypeCreateButton from "@/src/components/ui/organisms/AppointmentTypeCreateButton";
 
 type SP = { q?: string; status?: "all" | "active" | "inactive" };
+
 function safeStatus(v?: string): "all" | "active" | "inactive" {
   if (v === "active" || v === "inactive" || v === "all") return v;
   return "all";
 }
+
 function badge(isActive: boolean) {
-  return isActive ? <Badge variant="default">Active</Badge> : <Badge variant="destructive">Inactive</Badge>;
+  return isActive ? (
+    <Badge variant="default">Active</Badge>
+  ) : (
+    <Badge variant="destructive">Inactive</Badge>
+  );
 }
+
 function buildHref(q: string, status: "all" | "active" | "inactive") {
   const p = new URLSearchParams();
   if (q) p.set("q", q);
@@ -25,7 +46,11 @@ function buildHref(q: string, status: "all" | "active" | "inactive") {
   return `/admin/control/appointment-types?${p.toString()}`;
 }
 
-export default async function AppointmentTypesPage({ searchParams }: { searchParams?: SP | Promise<SP> }) {
+export default async function AppointmentTypesPage({
+  searchParams,
+}: {
+  searchParams?: SP | Promise<SP>;
+}) {
   const sp = await Promise.resolve(searchParams ?? {});
   const qRaw = (sp.q ?? "").trim();
   const q = qRaw.toLowerCase();
@@ -38,14 +63,6 @@ export default async function AppointmentTypesPage({ searchParams }: { searchPar
   if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
   if (q) filtered = filtered.filter((r) => (r.name ?? "").toLowerCase().includes(q));
 
-  async function deactivateAction(fd: FormData) {
-    "use server";
-    const id = String(fd.get("id") ?? "");
-    if (!id) return;
-    await deactivateAppointmentType(id);
-    revalidatePath("/admin/control/appointment-types");
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex items-end justify-between gap-3">
@@ -53,9 +70,13 @@ export default async function AppointmentTypesPage({ searchParams }: { searchPar
           <h1 className="text-2xl font-semibold">Appointment Types</h1>
           <p className="text-muted-foreground">Master table control.</p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/admin/control">Back</Link>
-        </Button>
+
+        <div className="flex gap-2">
+          <AppointmentTypeCreateButton />
+          <Button asChild variant="outline">
+            <Link href="/admin/control">Back</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -64,7 +85,11 @@ export default async function AppointmentTypesPage({ searchParams }: { searchPar
           <CardDescription>Search by name and filter by status.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/control/appointment-types" method="GET">
+          <form
+            className="relative w-full md:max-w-md"
+            action="/admin/control/appointment-types"
+            method="GET"
+          >
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
             <input type="hidden" name="status" value={status} />
@@ -99,6 +124,7 @@ export default async function AppointmentTypesPage({ searchParams }: { searchPar
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
@@ -112,20 +138,9 @@ export default async function AppointmentTypesPage({ searchParams }: { searchPar
                     <TableCell className="text-muted-foreground">{r.id}</TableCell>
                     <TableCell className="font-medium">{r.name}</TableCell>
                     <TableCell>{badge(r.isActive)}</TableCell>
+
                     <TableCell className="text-right">
-                      {r.isActive ? (
-                        <form action={deactivateAction}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <Button size="sm" variant="destructive" type="submit">
-                            <Ban className="h-4 w-4" />
-                            Deactivate
-                          </Button>
-                        </form>
-                      ) : (
-                        <Button size="sm" variant="outline" disabled>
-                          Inactive
-                        </Button>
-                      )}
+                      <AppointmentTypeRowActions row={r} />
                     </TableCell>
                   </TableRow>
                 ))

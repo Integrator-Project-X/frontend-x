@@ -35,24 +35,42 @@ export type AdminPersonalRow = {
   jobPositionName: string;
 };
 
+function toStr(v: any, fallback = "—") {
+  const s = String(v ?? "").trim();
+  return s ? s : fallback;
+}
+
+function toNum(v: any, fallback: number | null = null) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 export async function getPersonal(): Promise<AdminPersonalRow[]> {
-  const list = await apiServer.get<PersonalAPI[]>(API_ENDPOINTS.personal.list);
+  // 👇 apiServer ya hace unwrap: si backend envía { success, data: [...] } devuelve [...]
+  const list = await apiServer.get<PersonalAPI[] | any>(API_ENDPOINTS.personal.list);
 
-  return (list ?? []).map((p) => ({
-    id: p.id_personal,
-    isActive: !!p.isActive,
-    createdAt: p.createdAt ?? null,
+  const arr: PersonalAPI[] = Array.isArray(list) ? list : [];
 
-    userId: p.user?.id_user ?? null,
-    fullName: p.user?.full_name ?? "—",
-    phone: p.user?.phone_number ?? "—",
-    identification: p.user?.identification_number ?? "—",
+  return arr.map((p) => ({
+    id: toNum(p?.id_personal, 0) ?? 0,
+    isActive: !!p?.isActive,
+    createdAt: p?.createdAt ?? null,
 
-    jobPositionId: p.jobPosition?.id_job_position ?? null,
-    jobPositionName: p.jobPosition?.job_position_name ?? "—",
+    userId: toNum(p?.user?.id_user, null),
+    fullName: toStr(p?.user?.full_name),
+    phone: toStr(p?.user?.phone_number),
+    identification: toStr(p?.user?.identification_number),
+
+    jobPositionId: toNum(p?.jobPosition?.id_job_position, null),
+    jobPositionName: toStr(p?.jobPosition?.job_position_name),
   }));
 }
 
 export async function deactivatePersonal(id: string | number) {
-  return apiServer.patch(API_ENDPOINTS.personal.deactivate(String(id)));
+  const endpoint = API_ENDPOINTS.personal.deactivate(String(id).trim());
+
+  // Tu apiServer pone Content-Type SOLO si body !== undefined
+  // y la mayoría de backends aceptan PATCH sin body.
+  // 👇 mejor mandar undefined (más limpio)
+  return apiServer.patch(endpoint);
 }

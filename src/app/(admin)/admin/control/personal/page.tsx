@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Ban, Eye } from "lucide-react";
+import { Search, Ban, Plus, Pencil } from "lucide-react";
 
 import {
   Card,
@@ -24,10 +24,12 @@ import {
 import { getPersonal, deactivatePersonal } from "@/src/core/personal/personal.services";
 import type { AdminPersonalRow } from "@/src/core/personal/personal.services";
 
+import PersonalClientActions from "@/src/components/ui/organisms/PersonalClientActions";
+
 type SP = {
   q?: string;
   status?: "all" | "active" | "inactive";
-  job?: string; // filtro por job position name
+  job?: string;
 };
 
 function safeStatus(v?: string): "all" | "active" | "inactive" {
@@ -36,14 +38,22 @@ function safeStatus(v?: string): "all" | "active" | "inactive" {
 }
 
 function badge(isActive: boolean) {
-  return isActive ? <Badge variant="default">Active</Badge> : <Badge variant="destructive">Inactive</Badge>;
+  return isActive ? (
+    <Badge variant="default">Active</Badge>
+  ) : (
+    <Badge variant="destructive">Inactive</Badge>
+  );
 }
 
 function formatDate(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "2-digit" }).format(d);
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  }).format(d);
 }
 
 function buildHref(q: string, status: "all" | "active" | "inactive", job: string) {
@@ -54,7 +64,11 @@ function buildHref(q: string, status: "all" | "active" | "inactive", job: string
   return `/admin/control/personal?${p.toString()}`;
 }
 
-export default async function PersonalPage({ searchParams }: { searchParams?: SP | Promise<SP> }) {
+export default async function PersonalPage({
+  searchParams,
+}: {
+  searchParams?: SP | Promise<SP>;
+}) {
   const sp = await Promise.resolve(searchParams ?? {});
   const qRaw = (sp.q ?? "").trim();
   const q = qRaw.toLowerCase();
@@ -63,19 +77,19 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
 
   const rows = await getPersonal();
 
-  // options para dropdown
   const jobOptions = Array.from(
     new Set(rows.map((r) => (r.jobPositionName ?? "").trim()).filter(Boolean))
   );
 
-  // filters
   let filtered: AdminPersonalRow[] = [...rows];
 
   if (status === "active") filtered = filtered.filter((r) => r.isActive);
   if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
 
   if (job !== "all") {
-    filtered = filtered.filter((r) => (r.jobPositionName ?? "").toLowerCase() === job.toLowerCase());
+    filtered = filtered.filter(
+      (r) => (r.jobPositionName ?? "").toLowerCase() === job.toLowerCase()
+    );
   }
 
   if (q) {
@@ -98,13 +112,12 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
     "use server";
     const id = String(fd.get("id") ?? "");
     if (!id) return;
-    await deactivatePersonal(id);
+    await deactivatePersonal(id); // PATCH /personal/:id/deactivate
     revalidatePath("/admin/control/personal");
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-end justify-between gap-3">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Personal</h1>
@@ -113,12 +126,20 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
           </p>
         </div>
 
-        <Button asChild variant="outline">
-          <Link href="/admin">Back</Link>
-        </Button>
+        <div className="flex gap-2">
+          <PersonalClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New staff
+            </Button>
+          </PersonalClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin">Back</Link>
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
@@ -126,7 +147,11 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/control/personal" method="GET">
+          <form
+            className="relative w-full md:max-w-md"
+            action="/admin/control/personal"
+            method="GET"
+          >
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
             <input type="hidden" name="status" value={status} />
@@ -140,12 +165,19 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
             <Button asChild size="sm" variant={status === "active" ? "secondary" : "outline"}>
               <Link href={buildHref(qRaw, "active", job)}>Active</Link>
             </Button>
-            <Button asChild size="sm" variant={status === "inactive" ? "secondary" : "outline"}>
+            <Button
+              asChild
+              size="sm"
+              variant={status === "inactive" ? "secondary" : "outline"}
+            >
               <Link href={buildHref(qRaw, "inactive", job)}>Inactive</Link>
             </Button>
 
-            {/* Job filter (server-safe) */}
-            <form action="/admin/control/personal" method="GET" className="ml-2 flex items-center gap-2">
+            <form
+              action="/admin/control/personal"
+              method="GET"
+              className="ml-2 flex items-center gap-2"
+            >
               <input type="hidden" name="q" value={qRaw} />
               <input type="hidden" name="status" value={status} />
 
@@ -170,7 +202,6 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
         </CardContent>
       </Card>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">List</CardTitle>
@@ -203,7 +234,9 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
                     <TableCell>
                       <div className="space-y-0.5">
                         <p className="font-medium">#{r.id}</p>
-                        <p className="text-xs text-muted-foreground">UserID: {r.userId ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground">
+                          UserID: {r.userId ?? "—"}
+                        </p>
                       </div>
                     </TableCell>
 
@@ -222,12 +255,12 @@ export default async function PersonalPage({ searchParams }: { searchParams?: SP
 
                     <TableCell className="text-right">
                       <div className="inline-flex gap-2">
-                        <Button asChild variant="outline" size="sm">
-                          <Link href={`/admin/control/personal/${r.id}`}>
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Link>
-                        </Button>
+                        <PersonalClientActions mode="edit" personalId={r.id}>
+                          <Button variant="outline" size="sm">
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </PersonalClientActions>
 
                         {r.isActive ? (
                           <form action={deactivateAction}>

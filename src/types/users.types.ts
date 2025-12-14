@@ -1,30 +1,23 @@
-export type DbUser = {
-  id: number;
+export type AccessDTO = {
+  id_access: number;
   email: string;
-  fullname?: string; // tu backend usa "fullname" según el diagrama
-  is_active?: boolean; // si existe
-  isActive?: boolean;  // si existe
-};
-
-export type DbAccess = {
-  id: number;
-  email: string;
-  id_user: number;
-  id_role: number;
-};
-
-export type DbRole = {
-  id: number;
-  name: string; // "ADMIN" | "OWNER" | "CLINIC"
+  isActive: boolean;
+  user: {
+    id_user: number;
+    full_name: string;
+    isActive: boolean;
+  };
+  role: {
+    id_role: number;
+    role_name: string; // "ADMIN" | "VET" | "CLIENT"
+    isActive: boolean;
+  };
 };
 
 export type BackendUser = {
-  id: string;
+  id: number | string;
+  name: string;
   email: string;
-  name?: string;
-  isActive?: boolean;
-
-  roleId?: number;
-  roleName?: string;
-  accessId?: number;
+  roleName: string;
+  isActive: boolean;
 };

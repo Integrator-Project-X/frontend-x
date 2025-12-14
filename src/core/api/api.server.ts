@@ -40,15 +40,15 @@ async function requestServer<T>(path: string, options: ApiServerOptions): Promis
 }
 
 export const apiServer = {
-  get: async <T>(path: string, headers?: Record<string, string>) =>
+  get: async <T,>(path: string, headers?: Record<string, string>) =>
     requestServer<T>(path, { method: "GET", headers }),
 
-  post: async <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+  post: async <T,>(path: string, body?: unknown, headers?: Record<string, string>) =>
     requestServer<T>(path, { method: "POST", body, headers }),
 
-  patch: async <T>(path: string, body?: unknown, headers?: Record<string, string>) =>
+  patch: async <T,>(path: string, body?: unknown, headers?: Record<string, string>) =>
     requestServer<T>(path, { method: "PATCH", body, headers }),
 
-  delete: async <T>(path: string, headers?: Record<string, string>) =>
+  delete: async <T,>(path: string, headers?: Record<string, string>) =>
     requestServer<T>(path, { method: "DELETE", headers }),
 };

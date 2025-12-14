@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Ban } from "lucide-react";
+import { Search, Ban, Plus, Pencil } from "lucide-react";
 
 import {
   Card,
@@ -24,6 +24,8 @@ import {
 import type { AdminAnimalRow } from "@/src/types/masterdata.types";
 import { getAnimals, deactivateAnimal } from "@/src/core/masterdata/masterdata.service";
 
+import AnimalsClientActions from "@/src/components/ui/organisms/AnimalsCientActions";
+
 type SearchParams = {
   q?: string;
   status?: "all" | "active" | "inactive";
@@ -42,7 +44,11 @@ function buildHref(q: string, status: "all" | "active" | "inactive") {
 }
 
 function statusBadge(isActive: boolean) {
-  return isActive ? <Badge variant="default">Active</Badge> : <Badge variant="destructive">Inactive</Badge>;
+  return isActive ? (
+    <Badge variant="default">Active</Badge>
+  ) : (
+    <Badge variant="destructive">Inactive</Badge>
+  );
 }
 
 type Props = { searchParams?: SearchParams | Promise<SearchParams> };
@@ -60,13 +66,13 @@ export default async function AnimalsPage({ searchParams }: Props) {
   if (status === "active") filtered = filtered.filter((r) => r.isActive);
   if (status === "inactive") filtered = filtered.filter((r) => !r.isActive);
 
-  if (q) filtered = filtered.filter((r) => r.animalName.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter((r) => (r.animalName ?? "").toLowerCase().includes(q));
 
   async function deactivateAction(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
     if (!id) return;
-    await deactivateAnimal(id);
+    await deactivateAnimal(id); // PATCH /animals/:id/desactivate
     revalidatePath("/admin/master-data/animals");
   }
 
@@ -78,9 +84,18 @@ export default async function AnimalsPage({ searchParams }: Props) {
           <p className="text-muted-foreground">Master table control.</p>
         </div>
 
-        <Button asChild variant="outline">
-          <Link href="/admin">Back to Admin</Link>
-        </Button>
+        <div className="flex gap-2">
+          <AnimalsClientActions mode="create">
+            <Button variant="outline">
+              <Plus className="h-4 w-4" />
+              New animal
+            </Button>
+          </AnimalsClientActions>
+
+          <Button asChild variant="outline">
+            <Link href="/admin">Back to Admin</Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -142,19 +157,28 @@ export default async function AnimalsPage({ searchParams }: Props) {
                     <TableCell>{statusBadge(r.isActive)}</TableCell>
 
                     <TableCell className="text-right">
-                      {!r.isActive ? (
-                        <Button variant="outline" size="sm" disabled>
-                          Inactive
-                        </Button>
-                      ) : (
-                        <form action={deactivateAction}>
-                          <input type="hidden" name="id" value={r.id} />
-                          <Button variant="destructive" size="sm" type="submit">
-                            <Ban className="h-4 w-4" />
-                            Deactivate
+                      <div className="inline-flex gap-2">
+                        <AnimalsClientActions mode="edit" animal={{ id: r.id, animalName: r.animalName, isActive: r.isActive }}>
+                          <Button variant="outline" size="sm">
+                            <Pencil className="h-4 w-4" />
+                            Edit
                           </Button>
-                        </form>
-                      )}
+                        </AnimalsClientActions>
+
+                        {!r.isActive ? (
+                          <Button variant="outline" size="sm" disabled>
+                            Inactive
+                          </Button>
+                        ) : (
+                          <form action={deactivateAction}>
+                            <input type="hidden" name="id" value={r.id} />
+                            <Button variant="destructive" size="sm" type="submit">
+                              <Ban className="h-4 w-4" />
+                              Deactivate
+                            </Button>
+                          </form>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -163,7 +187,8 @@ export default async function AnimalsPage({ searchParams }: Props) {
           </Table>
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /animals</span> · action{" "}
+            Backend: <span className="font-mono">GET /animals</span> ·{" "}
+            <span className="font-mono">PATCH /animals/:id</span> ·{" "}
             <span className="font-mono">PATCH /animals/:id/desactivate</span>
           </p>
         </CardContent>

@@ -16,9 +16,34 @@ export async function GET() {
     return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
   }
 
-  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.animals.active}`, {
+  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.animals.list}`, {
     method: "GET",
-    headers: { Accept: "application/json", ...(await getAuthHeader()) },
+    headers: {
+      Accept: "application/json",
+      ...(await getAuthHeader()),
+    },
+    cache: "no-store",
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return NextResponse.json(data, { status: res.status });
+}
+
+export async function POST(req: Request) {
+  if (!BASE_URL) {
+    return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+
+  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.animals.create}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(await getAuthHeader()),
+    },
+    body: JSON.stringify(body),
     cache: "no-store",
   });
 

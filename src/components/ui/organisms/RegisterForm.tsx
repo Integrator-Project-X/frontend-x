@@ -1,19 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-type RegisterPayload = {
-  full_name: string;
-  age: number;
-  address: string;
-  phone_number: string;
-  identification_number: string;
-  id_gender: number;
-  email: string;
-  password: string;
-};
+import type { RegisterPayload } from "@/src/types/auth.types";
+import type { GenderBackend, GenderOption } from "@/src/types/genders.types";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -24,13 +16,62 @@ export default function RegisterForm() {
     address: "",
     phone_number: "",
     identification_number: "",
-    id_gender: 1,
+    id_gender: 0, // se setea cuando carguen genders
     email: "",
     password: "",
   });
 
+  const [genders, setGenders] = useState<GenderOption[]>([]);
+  const [gendersLoading, setGendersLoading] = useState(true);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Load genders list from backend and normalize: id_gender -> id
+  useEffect(() => {
+    let mounted = true;
+
+    (async () => {
+      try {
+        setGendersLoading(true);
+
+        const res = await fetch("/api/genders/active", { cache: "no-store" });
+        const data = await res.json();
+
+        // soporta: [...] o { data: [...] }
+        const raw: GenderBackend[] = Array.isArray(data) ? data : data?.data ?? [];
+
+        // normaliza al shape que usa el select
+        const normalized: GenderOption[] = raw.map((g) => ({
+          id: g.id_gender,
+          name: g.name,
+        }));
+
+        // remove duplicated ids (prevents React key warning)
+        const unique = Array.from(new Map(normalized.map((g) => [g.id, g])).values());
+
+        if (!mounted) return;
+
+        setGenders(unique);
+
+        // set default id_gender if needed
+        setForm((prev) => {
+          if (unique.length && !unique.some((g) => g.id === prev.id_gender)) {
+            return { ...prev, id_gender: unique[0].id };
+          }
+          return prev;
+        });
+      } catch {
+        if (mounted) setGenders([]);
+      } finally {
+        if (mounted) setGendersLoading(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const canSubmit = useMemo(() => {
     return (
@@ -90,115 +131,150 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      {/* Full name */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Full name</label>
-        <input
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="Jane Doe"
-          value={form.full_name}
-          onChange={onChange("full_name")}
-          required
-        />
-      </div>
+    <form onSubmit={submit} className="space-y-6">
+      {/* Account */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Account</h2>
+          <p className="text-xs text-gray-500">Credentials to access VetConnect.</p>
+        </div>
 
-      {/* Email */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Email</label>
-        <input
-          type="email"
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="you@email.com"
-          value={form.email}
-          onChange={onChange("email")}
-          required
-        />
-      </div>
-
-      {/* Password */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Password</label>
-        <input
-          type="password"
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="••••••••"
-          value={form.password}
-          onChange={onChange("password")}
-          minLength={6}
-          required
-        />
-        <p className="text-xs text-gray-500">Min 6 characters</p>
-      </div>
-
-      {/* Age + Gender */}
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Age</label>
+          <label className="text-sm font-medium text-gray-700">Full name</label>
           <input
-            type="number"
             className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-            value={form.age}
-            onChange={onChange("age")}
-            min={1}
+            placeholder="Jane Doe"
+            value={form.full_name}
+            onChange={onChange("full_name")}
             required
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-gray-700">Gender (id_gender)</label>
-          {/* Por ahora es input/selector simple.
-              Luego lo conectamos a GET /genders/active */}
-          <select
-            className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-            value={form.id_gender}
-            onChange={onChange("id_gender")}
-            required
-          >
-            <option value={1}>1</option>
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-          </select>
-          <p className="text-xs text-gray-500">
-            Later we’ll load these options from <span className="font-mono">/genders/active</span>
-          </p>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="you@email.com"
+              value={form.email}
+              onChange={onChange("email")}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Password</label>
+            <input
+              type="password"
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="••••••••"
+              value={form.password}
+              onChange={onChange("password")}
+              minLength={6}
+              required
+            />
+            <p className="text-xs text-gray-500">Min 6 characters</p>
+          </div>
         </div>
       </div>
 
-      {/* Phone */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Phone number</label>
-        <input
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="3001234567"
-          value={form.phone_number}
-          onChange={onChange("phone_number")}
-          required
-        />
+      <div className="h-px w-full bg-gray-100" />
+
+      {/* Personal info */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Personal info</h2>
+          <p className="text-xs text-gray-500">Basic information for your profile.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Age</label>
+            <input
+              type="number"
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              value={form.age}
+              onChange={onChange("age")}
+              min={1}
+              required
+            />
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-sm font-medium text-gray-700">Gender</label>
+
+            <select
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
+              value={form.id_gender}
+              onChange={onChange("id_gender")}
+              disabled={gendersLoading || genders.length === 0}
+              required
+            >
+              {gendersLoading && <option value={0}>Loading...</option>}
+
+              {!gendersLoading && genders.length === 0 && (
+                <option value={0}>No genders available</option>
+              )}
+
+              {!gendersLoading &&
+                genders.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+            </select>
+
+            <p className="text-xs text-gray-500">
+              Stored as <span className="font-mono">id_gender</span> (backend expects the ID).
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">Identification number</label>
+          <input
+            className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+            placeholder="CC / ID"
+            value={form.identification_number}
+            onChange={onChange("identification_number")}
+            required
+          />
+        </div>
       </div>
 
-      {/* Identification */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Identification number</label>
-        <input
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="CC / ID"
-          value={form.identification_number}
-          onChange={onChange("identification_number")}
-          required
-        />
-      </div>
+      <div className="h-px w-full bg-gray-100" />
 
-      {/* Address */}
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Address</label>
-        <input
-          className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-          placeholder="Street 123, City"
-          value={form.address}
-          onChange={onChange("address")}
-          required
-        />
+      {/* Contact */}
+      <div className="space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Contact</h2>
+          <p className="text-xs text-gray-500">How we can reach you.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Phone number</label>
+            <input
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="3001234567"
+              value={form.phone_number}
+              onChange={onChange("phone_number")}
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Address</label>
+            <input
+              className="w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Street 123, City"
+              value={form.address}
+              onChange={onChange("address")}
+              required
+            />
+          </div>
+        </div>
       </div>
 
       {/* Error */}

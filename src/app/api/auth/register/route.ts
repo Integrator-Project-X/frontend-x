@@ -1,20 +1,32 @@
 import { NextResponse } from "next/server";
-import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
 
 export async function POST(req: Request) {
-  if (!BASE_URL) return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+  try {
+    const body = await req.json().catch(() => null);
 
-  const body = await req.json();
+    const upstream = await fetch(`${BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
 
-  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.register}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    const data = await upstream.json().catch(() => null);
 
-  const data = await res.json().catch(() => ({}));
+    if (!upstream.ok) {
+      return NextResponse.json(
+        { error: data?.message ?? data?.error ?? "REGISTER_FAILED", details: data },
+        { status: upstream.status }
+      );
+    }
 
-  return NextResponse.json(data, { status: res.status });
+    return NextResponse.json(data, { status: 200 });
+  } catch (err) {
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", details: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
+  }
 }

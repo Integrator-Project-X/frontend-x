@@ -8,7 +8,9 @@ type ApiClientOptions = {
   headers?: Record<string, string>;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+// Normalize: remove trailing slashes so joining paths doesn't create `//`
+const BASE_URL = RAW_BASE_URL.replace(/\/+$/, "");
 
 function getCookie(name: string) {
   if (typeof document === "undefined") return undefined;
@@ -21,7 +23,10 @@ async function requestClient<T>(path: string, options: ApiClientOptions): Promis
 
   const token = getCookie(AUTH_COOKIES.token);
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  // Ensure path begins with a single slash
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  const res = await fetch(`${BASE_URL}${normalizedPath}`, {
     method: options.method,
     headers: {
       "Content-Type": "application/json",

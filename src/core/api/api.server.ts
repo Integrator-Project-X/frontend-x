@@ -9,7 +9,9 @@ type ApiServerOptions = {
   headers?: Record<string, string>;
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const RAW_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
+// Normalize base URL (remove trailing slashes)
+const BASE_URL = RAW_BASE_URL.replace(/\/+$/, "");
 
 async function requestServer<T>(path: string, options: ApiServerOptions): Promise<T> {
   if (!BASE_URL) throw new Error("Missing NEXT_PUBLIC_API_URL in .env.local");
@@ -17,20 +19,38 @@ async function requestServer<T>(path: string, options: ApiServerOptions): Promis
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIES.token)?.value;
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  // ensure path starts with a single slash
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  // Debug: log outgoing request (don't log the token value)
+  let bodyString: string | undefined = undefined;
+  try {
+    bodyString = options.body ? JSON.stringify(options.body) : undefined;
+  } catch {}
+
+  try {
+    console.info("apiServer.request", options.method, `${BASE_URL}${normalizedPath}`, {
+      hasAuth: Boolean(token),
+      body: options.body,
+      bodyString,
+    });
+  } catch {}
+
+  const res = await fetch(`${BASE_URL}${normalizedPath}`, {
     method: options.method,
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers ?? {}),
     },
-    body: options.body ? JSON.stringify(options.body) : undefined,
+    body: options.body ? bodyString : undefined,
     cache: "no-store",
   });
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`API ${options.method} ${path} failed: ${res.status} ${text}`);
+    // Include request body in error to make debugging easier
+    throw new Error(`API ${options.method} ${path} failed: ${res.status} ${text} -- requestBody: ${bodyString ?? "(none)"}`);
   }
 
   const contentType = res.headers.get("content-type") || "";

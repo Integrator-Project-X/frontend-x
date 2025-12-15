@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
+import Sidebar from "@/src/components/ui/organisms/sideBar";
 import { Calendar, Clock, MapPin, Phone, Star } from "lucide-react";
 
 // Datos de ejemplo
@@ -106,7 +107,9 @@ export default function ClinicsPage() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
+    <Sidebar/>
+    <div className="min-h-screen p-6 md:pl-[250px] flex-col">
       <main className="container mx-auto flex-1 px-4 py-8">
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold">Find a Clinic</h1>
@@ -274,5 +277,6 @@ export default function ClinicsPage() {
         </div>
       </main>
     </div>
+    </>
   );
 }

@@ -94,165 +94,218 @@ export default async function ClinicsPage({ searchParams }: PageProps) {
     revalidatePath("/admin/users/clinics");
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Clinics</h1>
-          <p className="text-muted-foreground">
-            Manage clinics, status (active/inactive), and basic info.
-          </p>
-        </div>
+ return (
+  <div className="space-y-10 rounded-2xl bg-slate-50/70 p-6">
+    {/* HEADER */}
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Clinics
+        </h1>
+        <p className="text-sm text-slate-600">
+          Manage clinics, status (active / inactive), and basic information.
+        </p>
+      </div>
 
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/users/pets">Go to Pets</Link>
+      <div className="flex gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/users/pets">Pets</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/users/vets">Vets</Link>
+        </Button>
+      </div>
+    </div>
+
+    {/* FILTERS */}
+    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="mb-4 space-y-1">
+        <h2 className="text-sm font-semibold text-slate-800">
+          Filters
+        </h2>
+        <p className="text-xs text-slate-500">
+          Search by clinic name, address, phone, or identification number.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/users/clinics"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            name="q"
+            defaultValue={qRaw}
+            className="pl-9"
+            placeholder="Search clinic, address, phone, ID..."
+          />
+          <input type="hidden" name="status" value={status} />
+        </form>
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "all")}>All</Link>
           </Button>
-          <Button asChild variant="outline">
-            <Link href="/admin/users/vets">Go to Vets</Link>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "active")}>Active</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
           </Button>
         </div>
       </div>
+    </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>
-            Search by clinic name, address, phone, or identification number.
-          </CardDescription>
-        </CardHeader>
+    {/* TABLE */}
+    <div className="rounded-2xl border bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b px-5 py-4">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800">
+            Clinics List
+          </h2>
+          <p className="text-xs text-slate-500">
+            {filtered.length} result(s)
+          </p>
+        </div>
+      </div>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/users/clinics" method="GET">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              name="q"
-              defaultValue={qRaw}
-              className="pl-9"
-              placeholder="Search clinic, address, phone, ID..."
-            />
-            <input type="hidden" name="status" value={status} />
-          </form>
+      <div className="p-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Clinic</TableHead>
+              <TableHead>Address</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>Identification</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant={status === "all" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "all")}>All</Link>
-            </Button>
-            <Button asChild variant={status === "active" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "active")}>Active</Link>
-            </Button>
-            <Button asChild variant={status === "inactive" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Table>
-            <TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
               <TableRow>
-                <TableHead>Clinic</TableHead>
-                <TableHead>Address</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Identification</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell
+                  colSpan={6}
+                  className="text-sm text-slate-500"
+                >
+                  No results found.
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            ) : (
+              filtered.map((c) => {
+                const showImage = hasValidHttpUrl(c.imageUrl);
 
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
-                    No results found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((c) => {
-                  const showImage = hasValidHttpUrl(c.imageUrl);
-
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 overflow-hidden rounded-lg border bg-white flex items-center justify-center">
-                            {showImage ? (
-                              <Image
-                                src={c.imageUrl as string}
-                                alt={c.name || "Clinic"}
-                                width={36}
-                                height={36}
-                                className="h-full w-full object-cover"
-                                unoptimized
-                              />
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">
-                                {initialLetter(c.name)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="space-y-0.5">
-                            <p className="font-medium">{c.name}</p>
-                            <p className="text-xs text-muted-foreground">ID: {c.id}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-muted-foreground">{c.address}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.phoneNumber}</TableCell>
-                      <TableCell className="text-muted-foreground">{c.identificationNumber}</TableCell>
-                      <TableCell>{statusBadge(!!c.isActive)}</TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="inline-flex gap-2">
-                          <ClinicViewButton
-                            clinic={{
-                              id: c.id,
-                              name: c.name,
-                              address: c.address,
-                              phoneNumber: c.phoneNumber,
-                              identificationNumber: c.identificationNumber,
-                              imageUrl: c.imageUrl,
-                              isActive: c.isActive,
-                            }}
-                          />
-
-                          {c.isActive ? (
-                            <form action={deactivateAction}>
-                              <input type="hidden" name="id" value={c.id} />
-                              <Button variant="destructive" size="sm" type="submit">
-                                <Ban className="h-4 w-4" />
-                                Deactivate
-                              </Button>
-                            </form>
+                return (
+                  <TableRow
+                    key={c.id}
+                    className="transition hover:bg-slate-50"
+                  >
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 overflow-hidden rounded-xl border bg-slate-100 flex items-center justify-center">
+                          {showImage ? (
+                            <Image
+                              src={c.imageUrl as string}
+                              alt={c.name || "Clinic"}
+                              width={40}
+                              height={40}
+                              className="h-full w-full object-cover"
+                              unoptimized
+                            />
                           ) : (
-                            <Button variant="outline" size="sm" disabled>
-                              Inactive
-                            </Button>
+                            <span className="text-xs font-medium text-slate-500">
+                              {initialLetter(c.name)}
+                            </span>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
 
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /clinics</span>. Update:{" "}
-            <span className="font-mono">PATCH /clinics/:id</span> (multipart/form-data).
-          </p>
-        </CardContent>
-      </Card>
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-slate-800">
+                            {c.name}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            ID · {c.id}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-slate-600">
+                      {c.address}
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {c.phoneNumber}
+                    </TableCell>
+                    <TableCell className="text-slate-600">
+                      {c.identificationNumber}
+                    </TableCell>
+                    <TableCell>
+                      {statusBadge(!!c.isActive)}
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="inline-flex gap-2">
+                        <ClinicViewButton
+                          clinic={{
+                            id: c.id,
+                            name: c.name,
+                            address: c.address,
+                            phoneNumber: c.phoneNumber,
+                            identificationNumber: c.identificationNumber,
+                            imageUrl: c.imageUrl,
+                            isActive: c.isActive,
+                          }}
+                        />
+
+                        {c.isActive ? (
+                          <form action={deactivateAction}>
+                            <input type="hidden" name="id" value={c.id} />
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              type="submit"
+                            >
+                              <Ban className="h-4 w-4" />
+                              Deactivate
+                            </Button>
+                          </form>
+                        ) : (
+                          <Button variant="outline" size="sm" disabled>
+                            Inactive
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+
+        <p className="mt-4 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /clinics</span> ·{" "}
+          <span className="font-mono">PATCH /clinics/:id</span>
+        </p>
+      </div>
     </div>
-  );
+  </div>
+);
 }

@@ -5,50 +5,108 @@ export default async function AdminDashboardPage() {
   const stats = await getAdminStats();
 
   return (
-    <div className="w-full space-y-6">
+    <div className="w-full space-y-8 rounded-2xl bg-slate-50/80 p-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Admin Dashboard
+        </h1>
+        <p className="text-slate-600">
           Overview and shortcuts for platform management.
         </p>
       </div>
 
+      {/* Stats cards */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border p-6">
-          <p className="text-sm text-muted-foreground">Active users</p>
-          <p className="text-2xl font-semibold">{stats.activeUsers}</p>
+        <div className="rounded-xl border border-green-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Active users</p>
+          <p className="text-3xl font-semibold text-green-600">
+            {stats.activeUsers}
+          </p>
         </div>
 
-        <div className="rounded-xl border p-6">
-          <p className="text-sm text-muted-foreground">Clinics registered</p>
-          <p className="text-2xl font-semibold">{stats.clinicsRegistered}</p>
+        <div className="rounded-xl border border-blue-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Clinics registered</p>
+          <p className="text-3xl font-semibold text-blue-600">
+            {stats.clinicsRegistered}
+          </p>
         </div>
 
-        <div className="rounded-xl border p-6">
-          <p className="text-sm text-muted-foreground">Total appointments</p>
-          <p className="text-2xl font-semibold">{stats.totalAppointments}</p>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Total appointments</p>
+          <p className="text-3xl font-semibold text-slate-800">
+            {stats.totalAppointments}
+          </p>
         </div>
 
-        <div className="rounded-xl border p-6">
-          <p className="text-sm text-muted-foreground">System alerts</p>
-          <p className="text-2xl font-semibold">{stats.systemAlerts}</p>
+        <div className="rounded-xl border border-red-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">System alerts</p>
+          <p className="text-3xl font-semibold text-red-600">
+            {stats.systemAlerts}
+          </p>
         </div>
       </div>
 
-      <div className="rounded-xl border p-6 space-y-2">
-        <h2 className="font-semibold">Quick links</h2>
-        <p className="text-sm text-muted-foreground">
-          Go directly to the most common admin areas.
-        </p>
+      {/* Quick links */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">
+            Quick links
+          </h2>
+          <p className="text-sm text-slate-500">
+            Go directly to the most common admin areas.
+          </p>
+        </div>
 
-        <div className="flex flex-col gap-2">
-          <Link className="underline" href="/admin/users/pet-owners">User Management · Pet Owners</Link>
-          <Link className="underline" href="/admin/clinics">User Management · Clinics</Link>
-          <Link className="underline" href="/admin/clinics/verification">Clinic Verification</Link>
-          <Link className="underline" href="/admin/appointments">Appointments Overview</Link>
-          <Link className="underline" href="/admin/appointments/problematic">Problematic Cases</Link>
-          <Link className="underline" href="/admin/appointments/reports">Reports</Link>
-          <Link className="underline" href="/admin/analytics">Analytics</Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/admin/users/pet-owners"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Pet Owners
+          </Link>
+
+          <Link
+            href="/admin/clinics"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Clinics
+          </Link>
+
+          <Link
+            href="/admin/clinics/verification"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Clinic Verification
+          </Link>
+
+          <Link
+            href="/admin/appointments"
+            className="rounded-lg border border-green-200 bg-green-100/70 px-4 py-2 text-green-700 font-medium transition hover:bg-green-200"
+          >
+            Appointments
+          </Link>
+
+          <Link
+            href="/admin/appointments/problematic"
+            className="rounded-lg border border-red-200 bg-red-100/70 px-4 py-2 text-red-700 font-medium transition hover:bg-red-200"
+          >
+            Problematic Cases
+          </Link>
+
+          <Link
+            href="/admin/appointments/reports"
+            className="rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-slate-700 font-medium transition hover:bg-slate-200"
+          >
+            Reports
+          </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="rounded-lg border border-green-200 bg-green-100/70 px-4 py-2 text-green-700 font-medium transition hover:bg-green-200"
+          >
+            Analytics
+          </Link>
         </div>
       </div>
     </div>

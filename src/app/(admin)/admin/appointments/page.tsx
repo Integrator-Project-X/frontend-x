@@ -153,231 +153,320 @@ export default async function AppointmentsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Appointments Overview</h1>
-          <p className="text-muted-foreground">
-            All appointments in the platform, with quick filters and actions.
-          </p>
-        </div>
-
-        <Button asChild variant="outline">
-          <Link href="/admin">Back to Dashboard</Link>
-        </Button>
+  <div className="space-y-8">
+    {/* Header */}
+    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-800">
+          Appointments Overview
+        </h1>
+        <p className="max-w-xl text-sm text-slate-600">
+          All appointments in the platform, with quick filters and actions.
+        </p>
       </div>
 
-      {/* Quick stats */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-xl border p-5">
-          <p className="text-sm text-muted-foreground">Total</p>
-          <p className="text-2xl font-semibold">{total}</p>
-        </div>
-        <div className="rounded-xl border p-5">
-          <p className="text-sm text-muted-foreground">Active</p>
-          <p className="text-2xl font-semibold">{activeCount}</p>
-        </div>
-        <div className="rounded-xl border p-5">
-          <p className="text-sm text-muted-foreground">Inactive</p>
-          <p className="text-2xl font-semibold">{inactiveCount}</p>
-        </div>
+      <Button
+        asChild
+        variant="outline"
+        className="border-blue-200 text-blue-700 hover:bg-blue-50"
+      >
+        <Link href="/admin">Back to Dashboard</Link>
+      </Button>
+    </div>
+
+    {/* Quick stats */}
+    <div className="grid gap-4 md:grid-cols-3">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-sm text-slate-500">Total</p>
+        <p className="mt-1 text-2xl font-semibold text-slate-800">{total}</p>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>
-            Search by clinic, pet, owner, vet, type, animal, race, or status.
-          </CardDescription>
-        </CardHeader>
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-sm text-slate-500">Active</p>
+        <p className="mt-1 text-2xl font-semibold text-green-700">
+          {activeCount}
+        </p>
+      </div>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-sm text-slate-500">Inactive</p>
+        <p className="mt-1 text-2xl font-semibold text-red-700">
+          {inactiveCount}
+        </p>
+      </div>
+    </div>
+
+    {/* Filters */}
+    <Card className="border-slate-200 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-slate-800">
+          Filters
+        </CardTitle>
+        <CardDescription className="text-slate-500">
+          Search by clinic, pet, owner, vet, type, animal, race, or status.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/appointments"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            name="q"
+            defaultValue={qRaw}
+            className="pl-9"
+            placeholder="Search appointments..."
+          />
+          <input type="hidden" name="state" value={state} />
+          <input type="hidden" name="animal" value={animal} />
+          <input type="hidden" name="type" value={type} />
+        </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={state === "all" ? "secondary" : "outline"}
+            className={state === "all" ? "bg-blue-100 text-blue-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "all", animal, type)}>All</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={state === "active" ? "secondary" : "outline"}
+            className={state === "active" ? "bg-green-100 text-green-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "active", animal, type)}>
+              Active
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={state === "inactive" ? "secondary" : "outline"}
+            className={state === "inactive" ? "bg-red-100 text-red-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "inactive", animal, type)}>
+              Inactive
+            </Link>
+          </Button>
+
+          {/* Animal filter */}
           <form
-            className="relative w-full md:max-w-md"
             action="/admin/appointments"
             method="GET"
+            className="ml-2 flex items-center gap-2"
           >
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
+            <input type="hidden" name="q" value={qRaw} />
             <input type="hidden" name="state" value={state} />
-            <input type="hidden" name="animal" value={animal} />
             <input type="hidden" name="type" value={type} />
+
+            <select
+              name="animal"
+              defaultValue={animal}
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="all">All animals</option>
+              {animalOptions.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Apply
+            </Button>
           </form>
 
-          <div className="flex flex-wrap gap-2 items-center">
-            <Button asChild variant={state === "all" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "all", animal, type)}>All</Link>
+          {/* Type filter */}
+          <form
+            action="/admin/appointments"
+            method="GET"
+            className="flex items-center gap-2"
+          >
+            <input type="hidden" name="q" value={qRaw} />
+            <input type="hidden" name="state" value={state} />
+            <input type="hidden" name="animal" value={animal} />
+
+            <select
+              name="type"
+              defaultValue={type}
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="all">All types</option>
+              {typeOptions.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Apply
             </Button>
-            <Button asChild variant={state === "active" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "active", animal, type)}>Active</Link>
-            </Button>
-            <Button asChild variant={state === "inactive" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "inactive", animal, type)}>Inactive</Link>
-            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
 
-            {/* animal filter */}
-            <form action="/admin/appointments" method="GET" className="ml-2 flex items-center gap-2">
-              <input type="hidden" name="q" value={qRaw} />
-              <input type="hidden" name="state" value={state} />
-              <input type="hidden" name="type" value={type} />
+    {/* Table */}
+    <Card className="border-slate-200 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-slate-800">
+          Appointments list
+        </CardTitle>
+        <CardDescription className="text-slate-500">
+          {filtered.length} result(s)
+        </CardDescription>
+      </CardHeader>
 
-              <select
-                name="animal"
-                defaultValue={animal}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
-              >
-                <option value="all">All animals</option>
-                {animalOptions.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead>Appointment</TableHead>
+              <TableHead>Clinic</TableHead>
+              <TableHead>Pet</TableHead>
+              <TableHead>Owner</TableHead>
+              <TableHead>Vet</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Appointment Status</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>State</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-              <Button type="submit" variant="outline" size="sm">
-                Apply
-              </Button>
-            </form>
-
-            {/* type filter */}
-            <form action="/admin/appointments" method="GET" className="flex items-center gap-2">
-              <input type="hidden" name="q" value={qRaw} />
-              <input type="hidden" name="state" value={state} />
-              <input type="hidden" name="animal" value={animal} />
-
-              <select
-                name="type"
-                defaultValue={type}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
-              >
-                <option value="all">All types</option>
-                {typeOptions.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-
-              <Button type="submit" variant="outline" size="sm">
-                Apply
-              </Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Table>
-            <TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
               <TableRow>
-                <TableHead>Appointment</TableHead>
-                <TableHead>Clinic</TableHead>
-                <TableHead>Pet</TableHead>
-                <TableHead>Owner</TableHead>
-                <TableHead>Vet</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Appointment Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>State</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell
+                  colSpan={10}
+                  className="py-6 text-center text-sm text-slate-500"
+                >
+                  No results found.
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            ) : (
+              filtered.map((a) => (
+                <TableRow key={a.id} className="hover:bg-slate-50">
+                  <TableCell>
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-slate-800">
+                        #{a.id}
+                      </p>
+                      <p className="text-xs text-slate-500 line-clamp-1">
+                        {a.description}
+                      </p>
+                    </div>
+                  </TableCell>
 
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-sm text-muted-foreground">
-                    No results found.
+                  <TableCell className="text-slate-500">
+                    {a.clinicName}
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    <div className="space-y-0.5">
+                      <p>{a.petName}</p>
+                      <p className="text-xs text-slate-500">
+                        {a.animalName} · {a.raceName}
+                      </p>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    {a.ownerName}
+                    {a.ownerId && (
+                      <span className="text-xs text-slate-500">
+                        {" "}
+                        · #{a.ownerId}
+                      </span>
+                    )}
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    <div className="space-y-0.5">
+                      <p>{a.vetName}</p>
+                      <p className="text-xs text-slate-500">
+                        {a.vetJob}
+                      </p>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    {a.typeName}
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    {a.statusName}
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">
+                    {formatDateTime(a.createdAt)}
+                  </TableCell>
+
+                  <TableCell>{stateBadge(!!a.isActive)}</TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="inline-flex gap-2">
+                      <AppointmentViewButton
+                        appointmentId={a.id}
+                        summary={{ isActive: a.isActive }}
+                      />
+
+                      {a.isActive ? (
+                        <form action={deactivateAction}>
+                          <input type="hidden" name="id" value={a.id} />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Ban className="h-4 w-4" />
+                            Deactivate
+                          </Button>
+                        </form>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                        >
+                          Inactive
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filtered.map((a) => (
-                  <TableRow key={a.id}>
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <p className="font-medium">#{a.id}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-1">
-                          {a.description}
-                        </p>
-                      </div>
-                    </TableCell>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-                    <TableCell className="text-muted-foreground">{a.clinicName}</TableCell>
-
-                    <TableCell className="text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <p>{a.petName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {a.animalName} · {a.raceName}
-                        </p>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-muted-foreground">
-                      {a.ownerName}
-                      {a.ownerId ? (
-                        <span className="text-xs text-muted-foreground"> · #{a.ownerId}</span>
-                      ) : null}
-                    </TableCell>
-
-                    <TableCell className="text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <p>{a.vetName}</p>
-                        <p className="text-xs text-muted-foreground">{a.vetJob}</p>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-muted-foreground">{a.typeName}</TableCell>
-                    <TableCell className="text-muted-foreground">{a.statusName}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(a.createdAt)}
-                    </TableCell>
-                    <TableCell>{stateBadge(!!a.isActive)}</TableCell>
-
-                    <TableCell className="text-right">
-                      <div className="inline-flex gap-2">
-                        {/* ✅ View abre modal (no redirección) */}
-                        <AppointmentViewButton
-                          appointmentId={a.id}
-                          summary={{ isActive: a.isActive }}
-                        />
-
-                        {a.isActive ? (
-                          <form action={deactivateAction}>
-                            <input type="hidden" name="id" value={a.id} />
-                            <Button variant="destructive" size="sm" type="submit">
-                              <Ban className="h-4 w-4" />
-                              Deactivate
-                            </Button>
-                          </form>
-                        ) : (
-                          <Button variant="outline" size="sm" disabled>
-                            Inactive
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /appointments</span> · action{" "}
-            <span className="font-mono">PATCH /appointments/:id/deactivate</span>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        <p className="mt-3 px-4 pb-4 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /appointments</span> ·{" "}
+          <span className="font-mono">
+            PATCH /appointments/:id/deactivate
+          </span>
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 }

@@ -64,95 +64,136 @@ export default async function AppointmentTypesPage({
   if (q) filtered = filtered.filter((r) => (r.name ?? "").toLowerCase().includes(q));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Appointment Types</h1>
-          <p className="text-muted-foreground">Master table control.</p>
-        </div>
+  <div className="space-y-10 rounded-2xl bg-slate-50/70 p-6">
+    {/* HEADER */}
+    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-slate-800">
+          Appointment Types
+        </h1>
+        <p className="text-sm text-slate-600">
+          Manage and control appointment categories used across the platform.
+        </p>
+      </div>
 
-        <div className="flex gap-2">
-          <AppointmentTypeCreateButton />
-          <Button asChild variant="outline">
-            <Link href="/admin/control">Back</Link>
+      <div className="flex gap-2">
+        <AppointmentTypeCreateButton />
+        <Button asChild variant="outline" size="sm">
+          <Link href="/admin/control">Back</Link>
+        </Button>
+      </div>
+    </div>
+
+    {/* FILTERS */}
+    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+      <div className="mb-4 space-y-1">
+        <h2 className="text-sm font-semibold text-slate-800">
+          Filters
+        </h2>
+        <p className="text-xs text-slate-500">
+          Search by name and filter by status.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/control/appointment-types"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            name="q"
+            defaultValue={qRaw}
+            className="pl-9"
+            placeholder="Search appointment type..."
+          />
+          <input type="hidden" name="status" value={status} />
+        </form>
+
+        {/* BOTONES – MISMA LÓGICA */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "all")}>All</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "active")}>Active</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+          >
+            <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
           </Button>
         </div>
       </div>
+    </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by name and filter by status.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form
-            className="relative w-full md:max-w-md"
-            action="/admin/control/appointment-types"
-            method="GET"
-          >
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
-            <input type="hidden" name="status" value={status} />
-          </form>
+    {/* TABLE */}
+    <div className="rounded-2xl border bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b px-5 py-4">
+        <div>
+          <h2 className="text-sm font-semibold text-slate-800">
+            Appointment Types
+          </h2>
+          <p className="text-xs text-slate-500">
+            {filtered.length} result(s)
+          </p>
+        </div>
+      </div>
 
-          <div className="flex gap-2">
-            <Button asChild size="sm" variant={status === "all" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "all")}>All</Link>
-            </Button>
-            <Button asChild size="sm" variant={status === "active" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "active")}>Active</Link>
-            </Button>
-            <Button asChild size="sm" variant={status === "inactive" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="p-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[90px]">ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={4} className="text-sm text-slate-500">
+                  No results found.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-muted-foreground">
-                    No results.
+            ) : (
+              filtered.map((r) => (
+                <TableRow
+                  key={r.id}
+                  className="transition hover:bg-slate-50"
+                >
+                  <TableCell className="text-slate-500">
+                    #{r.id}
+                  </TableCell>
+                  <TableCell className="font-medium text-slate-800">
+                    {r.name}
+                  </TableCell>
+                  <TableCell>{badge(r.isActive)}</TableCell>
+                  <TableCell className="text-right">
+                    <AppointmentTypeRowActions row={r} />
                   </TableCell>
                 </TableRow>
-              ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-muted-foreground">{r.id}</TableCell>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{badge(r.isActive)}</TableCell>
-
-                    <TableCell className="text-right">
-                      <AppointmentTypeRowActions row={r} />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /appointments-types</span>
-          </p>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
-  );
+  </div>
+);
 }

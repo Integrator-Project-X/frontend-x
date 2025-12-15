@@ -109,166 +109,227 @@ export default async function PetsPage({ searchParams }: PageProps) {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Pets</h1>
-          <p className="text-muted-foreground">
-            View all pets registered in the platform (from backend).
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/users/pet-owners">Go to Pet Owners</Link>
-          </Button>
-          <Button asChild variant="outline">
-            <Link href="/admin/users/vets">Go to Vets</Link>
-          </Button>
-        </div>
+  <div className="space-y-8">
+    {/* Header */}
+    <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-800">Pets</h1>
+        <p className="max-w-xl text-sm text-slate-600">
+          View all pets registered in the platform (from backend).
+        </p>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by pet name, animal, or race.</CardDescription>
-        </CardHeader>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          asChild
+          variant="outline"
+          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          <Link href="/admin/users/pet-owners">Go to Pet Owners</Link>
+        </Button>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* Search */}
-          <form className="relative w-full md:max-w-md" action="/admin/users/pets" method="GET">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              name="q"
-              defaultValue={qRaw}
-              className="pl-9"
-              placeholder="Search pet, animal, race..."
-            />
-            <input type="hidden" name="status" value={status} />
-            <input type="hidden" name="animal" value={animal} />
-          </form>
-
-          <div className="flex flex-wrap gap-2 items-center">
-            <Button asChild variant={status === "all" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "all", animal)}>All</Link>
-            </Button>
-
-            <Button asChild variant={status === "active" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "active", animal)}>Active</Link>
-            </Button>
-
-            <Button asChild variant={status === "inactive" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "inactive", animal)}>Inactive</Link>
-            </Button>
-
-            {/* Animal filter */}
-            <form action="/admin/users/pets" method="GET" className="ml-2 flex items-center">
-              <input type="hidden" name="q" value={qRaw} />
-              <input type="hidden" name="status" value={status} />
-
-              <select
-                name="animal"
-                defaultValue={animal}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
-              >
-                <option value="all">All animals</option>
-                {animalOptions.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-
-              <Button type="submit" variant="outline" size="sm" className="ml-2">
-                Apply
-              </Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pet</TableHead>
-                <TableHead>Animal</TableHead>
-                <TableHead>Race</TableHead>
-                <TableHead>Birth date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
-                    No results found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((p) => {
-                  const showImage = hasValidHttpUrl(p.imageUrl);
-
-                  return (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 overflow-hidden rounded-lg border bg-white flex items-center justify-center">
-                            {showImage ? (
-                              <Image
-                                src={p.imageUrl as string}
-                                alt={p.name || "Pet"}
-                                width={36}
-                                height={36}
-                                className="h-full w-full object-cover"
-                                unoptimized
-                              />
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">
-                                {initialLetter(p.name)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="space-y-0.5">
-                            <p className="font-medium">{p.name || "—"}</p>
-                            <p className="text-xs text-muted-foreground">ID: {p.id}</p>
-                          </div>
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-muted-foreground">{p.animalName || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{p.raceName || "—"}</TableCell>
-                      <TableCell className="text-muted-foreground">{formatDate(p.birthDate)}</TableCell>
-                      <TableCell>{statusBadge(!!p.isActive)}</TableCell>
-
-                      {/* ✅ ACTIONS: Modal */}
-                      <TableCell className="text-right">
-                        <PetViewButton pet={p} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /pets</span> (returns race + animal relations).
-          </p>
-        </CardContent>
-      </Card>
+        <Button
+          asChild
+          variant="outline"
+          className="border-blue-200 text-blue-700 hover:bg-blue-50"
+        >
+          <Link href="/admin/users/vets">Go to Vets</Link>
+        </Button>
+      </div>
     </div>
-  );
+
+    {/* Filters */}
+    <Card className="border-slate-200 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-slate-800">
+          Filters
+        </CardTitle>
+        <CardDescription className="text-slate-500">
+          Search by pet name, animal, or race.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        {/* Search */}
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/users/pets"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            name="q"
+            defaultValue={qRaw}
+            className="pl-9"
+            placeholder="Search pet, animal, race..."
+          />
+          <input type="hidden" name="status" value={status} />
+          <input type="hidden" name="animal" value={animal} />
+        </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+            className={status === "all" ? "bg-blue-100 text-blue-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "all", animal)}>All</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+            className={status === "active" ? "bg-green-100 text-green-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "active", animal)}>Active</Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+            className={status === "inactive" ? "bg-red-100 text-red-700" : ""}
+          >
+            <Link href={buildHref(qRaw, "inactive", animal)}>Inactive</Link>
+          </Button>
+
+          {/* Animal filter */}
+          <form
+            action="/admin/users/pets"
+            method="GET"
+            className="ml-2 flex items-center gap-2"
+          >
+            <input type="hidden" name="q" value={qRaw} />
+            <input type="hidden" name="status" value={status} />
+
+            <select
+              name="animal"
+              defaultValue={animal}
+              className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="all">All animals</option>
+              {animalOptions.map((a) => (
+                <option key={a} value={a}>
+                  {a}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              className="border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Apply
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Table */}
+    <Card className="border-slate-200 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold text-slate-800">
+          Pets list
+        </CardTitle>
+        <CardDescription className="text-slate-500">
+          {filtered.length} result(s)
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-slate-50">
+              <TableHead>Pet</TableHead>
+              <TableHead>Animal</TableHead>
+              <TableHead>Race</TableHead>
+              <TableHead>Birth date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="py-6 text-center text-sm text-slate-500"
+                >
+                  No results found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((p) => {
+                const showImage = hasValidHttpUrl(p.imageUrl);
+
+                return (
+                  <TableRow key={p.id} className="hover:bg-slate-50">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 overflow-hidden rounded-lg border border-slate-200 bg-white flex items-center justify-center">
+                          {showImage ? (
+                            <Image
+                              src={p.imageUrl as string}
+                              alt={p.name || "Pet"}
+                              width={36}
+                              height={36}
+                              className="h-full w-full object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <span className="text-[10px] text-slate-400">
+                              {initialLetter(p.name)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-0.5">
+                          <p className="font-medium text-slate-800">
+                            {p.name || "—"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            ID: {p.id}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-slate-500">
+                      {p.animalName || "—"}
+                    </TableCell>
+
+                    <TableCell className="text-slate-500">
+                      {p.raceName || "—"}
+                    </TableCell>
+
+                    <TableCell className="text-slate-500">
+                      {formatDate(p.birthDate)}
+                    </TableCell>
+
+                    <TableCell>{statusBadge(!!p.isActive)}</TableCell>
+
+                    {/* Actions */}
+                    <TableCell className="text-right">
+                      <PetViewButton pet={p} />
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+
+        <p className="mt-3 px-4 pb-4 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /pets</span> (returns race + animal relations).
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 }

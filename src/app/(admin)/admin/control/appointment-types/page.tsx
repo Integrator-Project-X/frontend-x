@@ -78,14 +78,14 @@ export default async function AppointmentTypesPage({
 
       <div className="flex gap-2">
         <AppointmentTypeCreateButton />
-        <Button asChild variant="outline" size="sm">
+        <Button asChild variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50">
           <Link href="/admin/control">Back</Link>
         </Button>
       </div>
     </div>
 
     {/* FILTERS */}
-    <div className="rounded-2xl border bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-4 space-y-1">
         <h2 className="text-sm font-semibold text-slate-800">
           Filters
@@ -117,6 +117,7 @@ export default async function AppointmentTypesPage({
             asChild
             size="sm"
             variant={status === "all" ? "secondary" : "outline"}
+            className={status === "all" ? "bg-blue-100 text-blue-700" : "border-blue-200 text-blue-700 hover:bg-blue-50"}
           >
             <Link href={buildHref(qRaw, "all")}>All</Link>
           </Button>
@@ -125,6 +126,7 @@ export default async function AppointmentTypesPage({
             asChild
             size="sm"
             variant={status === "active" ? "secondary" : "outline"}
+            className={status === "active" ? "bg-green-100 text-green-700" : "border-green-200 text-green-700 hover:bg-green-50"}
           >
             <Link href={buildHref(qRaw, "active")}>Active</Link>
           </Button>
@@ -133,6 +135,7 @@ export default async function AppointmentTypesPage({
             asChild
             size="sm"
             variant={status === "inactive" ? "secondary" : "outline"}
+            className={status === "inactive" ? "bg-red-100 text-red-700" : "border-red-200 text-red-700 hover:bg-red-50"}
           >
             <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
           </Button>
@@ -141,7 +144,7 @@ export default async function AppointmentTypesPage({
     </div>
 
     {/* TABLE */}
-    <div className="rounded-2xl border bg-white shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b px-5 py-4">
         <div>
           <h2 className="text-sm font-semibold text-slate-800">
@@ -157,10 +160,10 @@ export default async function AppointmentTypesPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[90px]">ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="w-[90px] text-slate-600">ID</TableHead>
+              <TableHead className="text-slate-600">Name</TableHead>
+              <TableHead className="text-slate-600">Status</TableHead>
+              <TableHead className="text-slate-600 text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
 

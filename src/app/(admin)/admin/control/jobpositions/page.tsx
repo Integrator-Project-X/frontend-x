@@ -62,125 +62,143 @@ export default async function JobPositionsPage({ searchParams }: { searchParams?
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Job Positions</h1>
-          <p className="text-muted-foreground">Master table control.</p>
-        </div>
-
-        <div className="flex gap-2">
-          <JobPositionClientActions mode="create">
-            <Button variant="outline">
-              <Plus className="h-4 w-4" />
-              New job position
-            </Button>
-          </JobPositionClientActions>
-
-          <Button asChild variant="outline">
-            <Link href="/admin/control">Back</Link>
-          </Button>
-        </div>
+  <div className="space-y-6">
+    <div className="flex items-end justify-between gap-3">
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-800">Job Positions</h1>
+        <p className="text-sm text-slate-600">Master table control.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by job position name.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/control/jobpositions" method="GET">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
-            <input type="hidden" name="status" value={status} />
-          </form>
+      <div className="flex gap-2">
+        <JobPositionClientActions mode="create">
+          <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Plus className="h-4 w-4" />
+            New job position
+          </Button>
+        </JobPositionClientActions>
 
-          <div className="flex gap-2">
-            <Button asChild size="sm" variant={status === "all" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "all")}>All</Link>
-            </Button>
-            <Button asChild size="sm" variant={status === "active" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "active")}>Active</Link>
-            </Button>
-            <Button asChild size="sm" variant={status === "inactive" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-muted-foreground">
-                    No results.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((r: any) => {
-                  const id = rowId(r);
-                  const name = rowName(r);
-                  const isActive = rowActive(r);
-
-                  return (
-                    <TableRow key={id}>
-                      <TableCell className="text-muted-foreground">{id}</TableCell>
-                      <TableCell className="font-medium">{name}</TableCell>
-                      <TableCell>{badge(isActive)}</TableCell>
-
-                      <TableCell className="text-right">
-                        <div className="inline-flex gap-2">
-                          <JobPositionClientActions mode="edit" jobPositionId={id}>
-                            <Button size="sm" variant="outline">
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Button>
-                          </JobPositionClientActions>
-
-                          {isActive ? (
-                            <form action={deactivateAction}>
-                              <input type="hidden" name="id" value={id} />
-                              <Button size="sm" variant="destructive" type="submit">
-                                <Ban className="h-4 w-4" />
-                                Deactivate
-                              </Button>
-                            </form>
-                          ) : (
-                            <Button size="sm" variant="outline" disabled>
-                              Inactive
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /jobpositions</span> · action{" "}
-            <span className="font-mono">PATCH /jobpositions/:id/desactivate</span>
-          </p>
-        </CardContent>
-      </Card>
+        <Button asChild variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+          <Link href="/admin/control">Back</Link>
+        </Button>
+      </div>
     </div>
-  );
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">Filters</CardTitle>
+        <CardDescription className="text-slate-500">Search by job position name.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <form className="relative w-full md:max-w-md" action="/admin/control/jobpositions" method="GET">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
+          <input type="hidden" name="status" value={status} />
+        </form>
+
+        <div className="flex gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+            className={status === "all" ? "bg-blue-100 text-blue-700" : "border-blue-200 text-blue-700 hover:bg-blue-50"}
+          >
+            <Link href={buildHref(qRaw, "all")}>All</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+            className={status === "active" ? "bg-green-100 text-green-700" : "border-green-200 text-green-700 hover:bg-green-50"}
+          >
+            <Link href={buildHref(qRaw, "active")}>Active</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+            className={status === "inactive" ? "bg-red-100 text-red-700" : "border-red-200 text-red-700 hover:bg-red-50"}
+          >
+            <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">List</CardTitle>
+        <CardDescription className="text-slate-500">{filtered.length} result(s)</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-slate-600">ID</TableHead>
+              <TableHead className="text-slate-600">Name</TableHead>
+              <TableHead className="text-slate-600">Status</TableHead>
+              <TableHead className="text-slate-600 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-sm text-slate-500">
+                  No results.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((r: any) => {
+                const id = rowId(r);
+                const name = rowName(r);
+                const isActive = rowActive(r);
+
+                return (
+                  <TableRow key={id} className="hover:bg-slate-50 transition">
+                    <TableCell className="text-slate-500">{id}</TableCell>
+                    <TableCell className="font-medium text-slate-800">{name}</TableCell>
+                    <TableCell>{badge(isActive)}</TableCell>
+
+                    <TableCell className="text-right">
+                      <div className="inline-flex gap-2">
+                        {/* ✅ Edit modal button */}
+                        <JobPositionClientActions mode="edit" jobPositionId={id}>
+                          <Button size="sm" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Button>
+                        </JobPositionClientActions>
+
+                        {/* ✅ Deactivate action */}
+                        {isActive ? (
+                          <form action={deactivateAction}>
+                            <input type="hidden" name="id" value={id} />
+                            <Button size="sm" variant="destructive" type="submit" className="bg-red-100 text-red-700 hover:bg-red-200">
+                              <Ban className="h-4 w-4" />
+                              Deactivate
+                            </Button>
+                          </form>
+                        ) : (
+                          <Button size="sm" variant="outline" disabled className="border-slate-300 text-slate-400">
+                            Inactive
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+
+        <p className="mt-3 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /jobpositions</span> · action{" "}
+          <span className="font-mono">PATCH /jobpositions/:id/desactivate</span>
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 }

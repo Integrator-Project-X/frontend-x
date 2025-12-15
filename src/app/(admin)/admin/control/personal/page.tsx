@@ -117,178 +117,194 @@ export default async function PersonalPage({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Personal</h1>
-          <p className="text-muted-foreground">
-            Manage staff linked to users + job positions.
-          </p>
-        </div>
-
-        <div className="flex gap-2">
-          <PersonalClientActions mode="create">
-            <Button variant="outline">
-              <Plus className="h-4 w-4" />
-              New staff
-            </Button>
-          </PersonalClientActions>
-
-          <Button asChild variant="outline">
-            <Link href="/admin">Back</Link>
-          </Button>
-        </div>
+  <div className="space-y-6">
+    <div className="flex items-end justify-between gap-3">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-slate-800">Personal</h1>
+        <p className="text-sm text-slate-600">
+          Manage staff linked to users + job positions.
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by name, phone, ID, job position.</CardDescription>
-        </CardHeader>
+      <div className="flex gap-2">
+        <PersonalClientActions mode="create">
+          <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Plus className="h-4 w-4" />
+            New staff
+          </Button>
+        </PersonalClientActions>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <Button asChild variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+          <Link href="/admin">Back</Link>
+        </Button>
+      </div>
+    </div>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">Filters</CardTitle>
+        <CardDescription className="text-slate-500">
+          Search by name, phone, ID, job position.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/control/personal"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
+          <input type="hidden" name="status" value={status} />
+          <input type="hidden" name="job" value={job} />
+        </form>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+            className={status === "all" ? "bg-blue-100 text-blue-700" : "border-blue-200 text-blue-700 hover:bg-blue-50"}
+          >
+            <Link href={buildHref(qRaw, "all", job)}>All</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+            className={status === "active" ? "bg-green-100 text-green-700" : "border-green-200 text-green-700 hover:bg-green-50"}
+          >
+            <Link href={buildHref(qRaw, "active", job)}>Active</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+            className={status === "inactive" ? "bg-red-100 text-red-700" : "border-red-200 text-red-700 hover:bg-red-50"}
+          >
+            <Link href={buildHref(qRaw, "inactive", job)}>Inactive</Link>
+          </Button>
+
           <form
-            className="relative w-full md:max-w-md"
             action="/admin/control/personal"
             method="GET"
+            className="ml-2 flex items-center gap-2"
           >
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
+            <input type="hidden" name="q" value={qRaw} />
             <input type="hidden" name="status" value={status} />
-            <input type="hidden" name="job" value={job} />
+
+            <select
+              name="job"
+              defaultValue={job}
+              className="h-9 rounded-md border bg-white px-3 text-sm"
+            >
+              <option value="all">All job positions</option>
+              {jobOptions.map((j) => (
+                <option key={j} value={j}>
+                  {j}
+                </option>
+              ))}
+            </select>
+
+            <Button type="submit" variant="outline" size="sm">
+              Apply
+            </Button>
           </form>
+        </div>
+      </CardContent>
+    </Card>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button asChild size="sm" variant={status === "all" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "all", job)}>All</Link>
-            </Button>
-            <Button asChild size="sm" variant={status === "active" ? "secondary" : "outline"}>
-              <Link href={buildHref(qRaw, "active", job)}>Active</Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant={status === "inactive" ? "secondary" : "outline"}
-            >
-              <Link href={buildHref(qRaw, "inactive", job)}>Inactive</Link>
-            </Button>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">List</CardTitle>
+        <CardDescription className="text-slate-500">{filtered.length} result(s)</CardDescription>
+      </CardHeader>
 
-            <form
-              action="/admin/control/personal"
-              method="GET"
-              className="ml-2 flex items-center gap-2"
-            >
-              <input type="hidden" name="q" value={qRaw} />
-              <input type="hidden" name="status" value={status} />
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-slate-600">Personal</TableHead>
+              <TableHead className="text-slate-600">User</TableHead>
+              <TableHead className="text-slate-600">Job Position</TableHead>
+              <TableHead className="text-slate-600">Created</TableHead>
+              <TableHead className="text-slate-600">Status</TableHead>
+              <TableHead className="text-slate-600 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-              <select
-                name="job"
-                defaultValue={job}
-                className="h-9 rounded-md border bg-white px-3 text-sm"
-              >
-                <option value="all">All job positions</option>
-                {jobOptions.map((j) => (
-                  <option key={j} value={j}>
-                    {j}
-                  </option>
-                ))}
-              </select>
-
-              <Button type="submit" variant="outline" size="sm">
-                Apply
-              </Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <Table>
-            <TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
               <TableRow>
-                <TableHead>Personal</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Job Position</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="text-sm text-slate-500">
+                  No results.
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            ) : (
+              filtered.map((r) => (
+                <TableRow key={r.id} className="transition hover:bg-slate-50">
+                  <TableCell className="text-slate-500">
+                    <div className="space-y-0.5">
+                      <p className="font-medium">#{r.id}</p>
+                      <p className="text-xs text-slate-500">UserID: {r.userId ?? "—"}</p>
+                    </div>
+                  </TableCell>
 
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-sm text-muted-foreground">
-                    No results.
+                  <TableCell className="text-slate-500">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-slate-800">{r.fullName}</p>
+                      <p className="text-xs text-slate-500">
+                        {r.phone} · {r.identification}
+                      </p>
+                    </div>
+                  </TableCell>
+
+                  <TableCell className="text-slate-500">{r.jobPositionName}</TableCell>
+                  <TableCell className="text-slate-500">{formatDate(r.createdAt)}</TableCell>
+                  <TableCell>{badge(r.isActive)}</TableCell>
+
+                  <TableCell className="text-right">
+                    <div className="inline-flex gap-2">
+                      <PersonalClientActions mode="edit" personalId={r.id}>
+                        <Button size="sm" variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </Button>
+                      </PersonalClientActions>
+
+                      {r.isActive ? (
+                        <form action={deactivateAction}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            type="submit"
+                            className="bg-red-100 text-red-700 hover:bg-red-200"
+                          >
+                            <Ban className="h-4 w-4" />
+                            Deactivate
+                          </Button>
+                        </form>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled className="border-slate-300 text-slate-400">
+                          Inactive
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell>
-                      <div className="space-y-0.5">
-                        <p className="font-medium">#{r.id}</p>
-                        <p className="text-xs text-muted-foreground">
-                          UserID: {r.userId ?? "—"}
-                        </p>
-                      </div>
-                    </TableCell>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-                    <TableCell className="text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <p className="font-medium text-foreground">{r.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {r.phone} · {r.identification}
-                        </p>
-                      </div>
-                    </TableCell>
-
-                    <TableCell className="text-muted-foreground">{r.jobPositionName}</TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(r.createdAt)}</TableCell>
-                    <TableCell>{badge(r.isActive)}</TableCell>
-
-                    <TableCell className="text-right">
-                      <div className="inline-flex gap-2">
-                        <PersonalClientActions mode="edit" personalId={r.id}>
-                          <Button variant="outline" size="sm">
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Button>
-                        </PersonalClientActions>
-
-                        {r.isActive ? (
-                          <form action={deactivateAction}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <Button variant="destructive" size="sm" type="submit">
-                              <Ban className="h-4 w-4" />
-                              Deactivate
-                            </Button>
-                          </form>
-                        ) : (
-                          <Button variant="outline" size="sm" disabled>
-                            Inactive
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /personal</span> · action{" "}
-            <span className="font-mono">PATCH /personal/:id/deactivate</span>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        <p className="mt-3 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /personal</span> · action{" "}
+          <span className="font-mono">PATCH /personal/:id/deactivate</span>
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 }

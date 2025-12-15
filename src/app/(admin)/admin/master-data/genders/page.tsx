@@ -63,123 +63,154 @@ export default async function GendersPage({ searchParams }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Genders</h1>
-          <p className="text-muted-foreground">Master table control.</p>
-        </div>
-
-        <div className="flex gap-2">
-          <GenderClientActions mode="create">
-            <Button variant="outline">
-              <Plus className="h-4 w-4" />
-              New gender
-            </Button>
-          </GenderClientActions>
-
-          <Button asChild variant="outline">
-            <Link href="/admin">Back to Admin</Link>
-          </Button>
-        </div>
+  <div className="space-y-6">
+    <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-slate-800">Genders</h1>
+        <p className="text-sm text-slate-600">Master table control.</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filters</CardTitle>
-          <CardDescription>Search by name + filter by status.</CardDescription>
-        </CardHeader>
+      <div className="flex gap-2">
+        <GenderClientActions mode="create">
+          <Button variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+            <Plus className="h-4 w-4" />
+            New gender
+          </Button>
+        </GenderClientActions>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <form className="relative w-full md:max-w-md" action="/admin/master-data/genders" method="GET">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
-            <input type="hidden" name="status" value={status} />
-          </form>
+        <Button asChild variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+          <Link href="/admin">Back to Admin</Link>
+        </Button>
+      </div>
+    </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant={status === "all" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "all")}>All</Link>
-            </Button>
-            <Button asChild variant={status === "active" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "active")}>Active</Link>
-            </Button>
-            <Button asChild variant={status === "inactive" ? "secondary" : "outline"} size="sm">
-              <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">Filters</CardTitle>
+        <CardDescription className="text-slate-500">
+          Search by name + filter by status.
+        </CardDescription>
+      </CardHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
-          <CardDescription>{filtered.length} result(s)</CardDescription>
-        </CardHeader>
+      <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <form
+          className="relative w-full md:max-w-md"
+          action="/admin/master-data/genders"
+          method="GET"
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input name="q" defaultValue={qRaw} className="pl-9" placeholder="Search..." />
+          <input type="hidden" name="status" value={status} />
+        </form>
 
-        <CardContent>
-          <Table>
-            <TableHeader>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            asChild
+            size="sm"
+            variant={status === "all" ? "secondary" : "outline"}
+            className={status === "all" ? "bg-blue-100 text-blue-700" : "border-blue-200 text-blue-700 hover:bg-blue-50"}
+          >
+            <Link href={buildHref(qRaw, "all")}>All</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "active" ? "secondary" : "outline"}
+            className={status === "active" ? "bg-green-100 text-green-700" : "border-green-200 text-green-700 hover:bg-green-50"}
+          >
+            <Link href={buildHref(qRaw, "active")}>Active</Link>
+          </Button>
+          <Button
+            asChild
+            size="sm"
+            variant={status === "inactive" ? "secondary" : "outline"}
+            className={status === "inactive" ? "bg-red-100 text-red-700" : "border-red-200 text-red-700 hover:bg-red-50"}
+          >
+            <Link href={buildHref(qRaw, "inactive")}>Inactive</Link>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base text-slate-800">List</CardTitle>
+        <CardDescription className="text-slate-500">{filtered.length} result(s)</CardDescription>
+      </CardHeader>
+
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-slate-600">ID</TableHead>
+              <TableHead className="text-slate-600">Name</TableHead>
+              <TableHead className="text-slate-600">Status</TableHead>
+              <TableHead className="text-slate-600 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filtered.length === 0 ? (
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell colSpan={4} className="text-sm text-slate-500">
+                  No results found.
+                </TableCell>
               </TableRow>
-            </TableHeader>
+            ) : (
+              filtered.map((r) => (
+                <TableRow key={r.id} className="transition hover:bg-slate-50">
+                  <TableCell className="text-slate-500">{r.id}</TableCell>
+                  <TableCell className="font-medium text-slate-800">{r.name}</TableCell>
+                  <TableCell>{statusBadge(r.isActive)}</TableCell>
 
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-muted-foreground">
-                    No results found.
+                  <TableCell className="text-right">
+                    <div className="inline-flex gap-2">
+                      <GenderClientActions mode="edit" gender={{ id: r.id, name: r.name, isActive: r.isActive }}>
+                        <Button variant="outline" size="sm" className="border-blue-200 text-blue-700 hover:bg-blue-50">
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </Button>
+                      </GenderClientActions>
+
+                      {!r.isActive ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled
+                          className="border-slate-300 text-slate-400"
+                        >
+                          Inactive
+                        </Button>
+                      ) : (
+                        <form action={deactivateAction}>
+                          <input type="hidden" name="id" value={r.id} />
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            type="submit"
+                            className="bg-red-100 text-red-700 hover:bg-red-200"
+                          >
+                            <Ban className="h-4 w-4" />
+                            Deactivate
+                          </Button>
+                        </form>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filtered.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="text-muted-foreground">{r.id}</TableCell>
-                    <TableCell className="font-medium">{r.name}</TableCell>
-                    <TableCell>{statusBadge(r.isActive)}</TableCell>
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-                    <TableCell className="text-right">
-                      <div className="inline-flex gap-2">
-                        <GenderClientActions mode="edit" gender={{ id: r.id, name: r.name, isActive: r.isActive }}>
-                          <Button variant="outline" size="sm">
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Button>
-                        </GenderClientActions>
-
-                        {!r.isActive ? (
-                          <Button variant="outline" size="sm" disabled>
-                            Inactive
-                          </Button>
-                        ) : (
-                          <form action={deactivateAction}>
-                            <input type="hidden" name="id" value={r.id} />
-                            <Button variant="destructive" size="sm" type="submit">
-                              <Ban className="h-4 w-4" />
-                              Deactivate
-                            </Button>
-                          </form>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Backend: <span className="font-mono">GET /genders</span> · actions{" "}
-            <span className="font-mono">POST /genders</span> ·{" "}
-            <span className="font-mono">PATCH /genders/:id</span> ·{" "}
-            <span className="font-mono">DELETE /genders/soft/:id</span>
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+        <p className="mt-3 text-xs text-slate-400">
+          Backend: <span className="font-mono">GET /genders</span> · actions{" "}
+          <span className="font-mono">POST /genders</span> ·{" "}
+          <span className="font-mono">PATCH /genders/:id</span> ·{" "}
+          <span className="font-mono">DELETE /genders/soft/:id</span>
+        </p>
+      </CardContent>
+    </Card>
+  </div>
+);
 }

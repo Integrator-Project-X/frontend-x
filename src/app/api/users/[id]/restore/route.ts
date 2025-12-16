@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
@@ -27,7 +27,16 @@ async function safeJson(res: Response) {
   }
 }
 
-async function handler({ id }: { id: string }) {
+function normalizeNumericId(value: unknown): string | null {
+  const s = String(value ?? "").trim();
+  if (!s) return null;
+  if (!/^\d+$/.test(s)) return null;
+  return s;
+}
+
+type RouteCtx = { params: Promise<{ id: string }> };
+
+async function handler(id: string) {
   if (!BASE_URL) {
     return NextResponse.json(
       { message: "Missing NEXT_PUBLIC_API_URL" },
@@ -35,10 +44,11 @@ async function handler({ id }: { id: string }) {
     );
   }
 
+  // Ajusta esto a tu endpoint real:
   const url = joinUrl(BASE_URL, API_ENDPOINTS.users.restore(id));
 
   const res = await fetch(url, {
-    method: "PATCH",
+    method: "PATCH", // o "POST" si tu backend lo requiere
     headers: {
       "Content-Type": "application/json",
       ...(await authHeaders()),
@@ -49,10 +59,31 @@ async function handler({ id }: { id: string }) {
   return NextResponse.json(data, { status: res.status });
 }
 
-export async function POST(_: Request, { params }: { params: { id: string } }) {
-  return handler({ id: params.id });
+export async function POST(_: NextRequest, ctx: RouteCtx) {
+  const { id: rawId } = await ctx.params;
+  const id = normalizeNumericId(rawId);
+
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, message: "Invalid route param id", received: rawId },
+      { status: 400 }
+    );
+  }
+
+  return handler(id);
 }
 
-export async function PATCH(_: Request, { params }: { params: { id: string } }) {
-  return handler({ id: params.id });
+// Si también lo expones como PATCH:
+export async function PATCH(_: NextRequest, ctx: RouteCtx) {
+  const { id: rawId } = await ctx.params;
+  const id = normalizeNumericId(rawId);
+
+  if (!id) {
+    return NextResponse.json(
+      { ok: false, message: "Invalid route param id", received: rawId },
+      { status: 400 }
+    );
+  }
+
+  return handler(id);
 }

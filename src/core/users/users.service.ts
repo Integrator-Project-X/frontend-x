@@ -1,7 +1,7 @@
 import "server-only";
 import { apiServer } from "@/src/core/api/api.server";
 import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
-import type { AccessDTO, BackendUser } from "@/src/types/users.types";
+import type { AccessDTO, BackendUser, UserMe } from "@/src/types/users.types";
 
 // ✅ Normaliza cualquier "shape" típico del backend
 function normalizeAccessList(payload: any): AccessDTO[] {
@@ -36,4 +36,9 @@ export async function deactivateUser(id: string | number) {
 
 export async function restoreUser(id: string | number) {
   return apiServer.patch(API_ENDPOINTS.users.restore(String(id)));
+}
+
+export async function getMe(): Promise<UserMe> {
+  const raw = await apiServer.get<any>(API_ENDPOINTS.users.me);
+  return (raw?.data ?? raw) as UserMe;
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchData } from '@/src/lib/api'
+import { fetchDataAnalytics } from '@/src/lib/api'
 import BarChart from '@/src/components/ui/charts/BarChart'
 import PieChart from '@/src/components/ui/charts/PieChart'
 import LineChart from '@/src/components/ui/charts/LineChart'
@@ -15,19 +15,19 @@ export default function AdminDashboard() {
   const [loadingKpis, setLoadingKpis] = useState(true)
 
   useEffect(() => {
-    fetchData('/admin/analytics/clinics')
+    fetchDataAnalytics('/admin/analytics/clinics')
       .then(setClinics)
       .catch(() => setClinics(null))
 
-    fetchData('/admin/analytics/animals')
+    fetchDataAnalytics('/admin/analytics/animals')
       .then(setAnimals)
       .catch(() => setAnimals(null))
 
-    fetchData('/admin/analytics/clients-by-month')
+    fetchDataAnalytics('/admin/analytics/clients-by-month')
       .then(setClientsByMonth)
       .catch(() => setClientsByMonth(null))
 
-    fetchData('/admin/analytics/kpis/summary')
+    fetchDataAnalytics('/admin/analytics/kpis/summary')
       .then((res) => {
         const data =
           res?.data ??

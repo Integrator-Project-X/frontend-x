@@ -1,14 +1,20 @@
 "use client"
 
+import Sidebar from "@/src/components/ui/organisms/sideBar";
 import { actiClinic } from "@/src/types/mockClinics";
 import { MapPin, Phone, Clock, Upload, Siren } from "lucide-react";
+import EmergencyForm from "@/src/components/ui/organisms/EmergencyForm";
+import { emergenciesClient } from "@/src/core/api/emergencies.client";
 
 export default function ClinicsPage() {
 
   const filteredClinics = actiClinic.filter((clinic) => clinic.is24Hours);
 
   return (
-    <div className="min-h-screen px-6 py-10">
+    <>
+    <div className="min-h-screen md:pl-[250px] ">
+    <Sidebar/>
+    <div className=" min-h-screen px-6 py-10">
       {/* Header */}
       <div className="bg-orange-100 border border-orange-200 px-6 py-4 rounded-lg mb-10">
         <h1 className="text-2xl font-bold flex items-center gap-3">
@@ -89,68 +95,21 @@ export default function ClinicsPage() {
             </h2>
 
             <div className="space-y-5 mt-4">
-
-              {/* Type of emergency */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Type of Case</label>
-                <select className="w-full border rounded px-3 py-2">
-                  <option>Select the type of emergency</option>
-                </select>
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Location</label>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="Street address or neighborhood"
-                />
-                <button className="text-blue-600 text-sm mt-1 underline">
-                  Use Current Location
-                </button>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Brief Description</label>
-                <textarea
-                  className="w-full border rounded px-3 py-2 h-20"
-                  placeholder="Describe what is happening with the animal..."
-                ></textarea>
-              </div>
-
-              {/* Upload */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Attach Photos (Optional)</label>
-                <div className="border border-dashed rounded-xl p-8 text-center text-gray-500">
-                  <Upload className="mx-auto w-8 h-8 mb-2" />
-                  Click to upload or drag and drop
-                  <p className="text-xs mt-1">PNG, JPG up to 10MB</p>
-                </div>
-              </div>
-
-              {/* Contact info */}
-              <div>
-                <h3 className="font-semibold mb-2">Your Contact Information</h3>
-                <label className="block text-sm font-medium mb-1">Full Name</label>
-                <input
-                  className="w-full border rounded px-3 py-2 mb-3"
-                  placeholder="Your Name"
-                />
-
-                <label className="block text-sm font-medium mb-1">Phone Number</label>
-                <input
-                  className="w-full border rounded px-3 py-2"
-                  placeholder="+57 300 123 4567"
-                />
-              </div>
-
-              {/* Submit Button */}
-              <button className="bg-orange-600 w-full text-white py-3 rounded-md mt-2 hover:bg-orange-700 flex items-center justify-center gap-2">
-                <Clock className="w-4 h-4" />
-                Send Report to Animal Patrol
-              </button>
-
+              <EmergencyForm onSubmit={async (data) => {
+                try {
+                  await emergenciesClient.report({
+                    type: data.type,
+                    location: data.location,
+                    description: data.description,
+                    reporterName: data.name,
+                    reporterPhone: data.phone,
+                  });
+                  alert('Report submitted');
+                } catch (err) {
+                  console.error(err);
+                  alert('Failed to submit report');
+                }
+              }} submitLabel="Send Report to Animal Patrol" />
             </div>
           </div>
 
@@ -166,5 +125,8 @@ export default function ClinicsPage() {
         </div>
       </div>
     </div>
+
+    </div>
+    </>
   );
 }

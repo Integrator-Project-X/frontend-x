@@ -1,41 +1,118 @@
 import { NextResponse } from "next/server";
-import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
+import { cookies } from "next/headers";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = process.env.BACKEND_URL ?? "http://localhost:3001";
+
+type BackendLoginResponse = {
+  success?: boolean;
+  data?: {
+    accessToken?: string;
+    user?: {
+      userid?: number;
+      accessId?: number;
+      roleId?: number;
+      roleName?: string; // "ADMIN" | ...
+      email?: string;
+    };
+  };
+  message?: string;
+  error?: string;
+};
 
 export async function POST(req: Request) {
-  if (!BASE_URL) return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+  try {
+    const body = await req.json().catch(() => null);
 
-  const body = await req.json();
+    if (!body?.email || !body?.password) {
+      return NextResponse.json(
+        { error: "MISSING_CREDENTIALS" },
+        { status: 400 }
+      );
+    }
 
-  const res = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.login}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    const upstream = await fetch(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      // tu backend espera { email, password }
+      body: JSON.stringify({ email: body.email, password: body.password }),
+      cache: "no-store",
+    });
 
-  const data = await res.json().catch(() => ({}));
+    const data = (await upstream.json().catch(() => null)) as BackendLoginResponse | null;
 
-  if (!res.ok) {
-    return NextResponse.json(data, { status: res.status });
+    if (!upstream.ok) {
+      return NextResponse.json(
+        {
+          error: data?.message ?? data?.error ?? "LOGIN_FAILED",
+          details: data ?? null,
+        },
+        { status: upstream.status }
+      );
+    }
+
+    const token = data?.data?.accessToken;
+    const user = data?.data?.user;
+    const role = user?.roleName;
+
+    if (!token) {
+      // Aquí estaba tu 500: el token existe pero lo estabas leyendo mal
+      return NextResponse.json(
+        { error: "TOKEN_MISSING_IN_RESPONSE", details: data },
+        { status: 502 }
+      );
+    }
+
+    const cookieStore = await cookies();
+    const secure = process.env.NODE_ENV === "production";
+
+    cookieStore.set(AUTH_COOKIES.token, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure,
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+    });
+
+    if (role) {
+      cookieStore.set(AUTH_COOKIES.role, String(role), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    if (user?.userid != null) {
+      cookieStore.set(AUTH_COOKIES.userId, String(user.userid), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    if (user?.accessId != null) {
+      cookieStore.set(AUTH_COOKIES.accessId, String(user.accessId), {
+        httpOnly: true,
+        sameSite: "lax",
+        secure,
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
+    return NextResponse.json(
+      { ok: true, role: role ?? null, user: user ?? null },
+      { status: 200 }
+    );
+  } catch (err) {
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", details: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
   }
-
-  // Ajusta esto cuando veas el response real del backend:
-  const token = data.accessToken ?? data.token ?? data.jwt;
-
-  if (!token) {
-    return NextResponse.json({ message: "Login ok but token missing in response" }, { status: 500 });
-  }
-
-  const response = NextResponse.json({ ok: true });
-
-  response.cookies.set(AUTH_COOKIES.token, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false, // en prod true
-    path: "/",
-  });
-
-  return response;
 }
+

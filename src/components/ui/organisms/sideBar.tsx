@@ -2,8 +2,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import logo from "@/public/logoBasw.svg"
-import { Home, Hospital, ShoppingCart, Siren, Menu, X, User as UserIcon, LogIn, UserPlus } from "lucide-react";
+import logo from "@/public/logoBasw.svg";
+import {
+  Home,
+  Hospital,
+  Siren,
+  Menu,
+  X,
+  User as UserIcon,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -11,10 +20,14 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* HAMBURGUESA (solo móvil) */}
+      {/* HAMBURGUESA (MÓVIL) */}
       {!open && (
         <button
-          className="md:hidden fixed top-4 left-4 z-50 bg-neutral-900 text-white p-2 rounded-lg shadow"
+          className="md:hidden fixed top-4 left-4 z-50
+                     bg-white/80 backdrop-blur-md
+                     text-slate-800
+                     border border-slate-200
+                     p-2 rounded-xl shadow"
           onClick={() => setOpen(true)}
           aria-label="Open menu"
         >
@@ -25,7 +38,7 @@ export default function Sidebar() {
       {/* OVERLAY MOBILE */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/30 z-40 md:hidden"
           onClick={() => setOpen(false)}
         />
       )}
@@ -33,8 +46,13 @@ export default function Sidebar() {
       {/* SIDEBAR */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen z-50 bg-neutral-900 text-white p-6 pb-28
-          w-72 md:w-[250px] flex flex-col shadow-xl
+          fixed top-0 left-0 h-screen z-50
+          bg-white/80 backdrop-blur-md
+          text-slate-800
+          border-r border-slate-200
+          p-6 pb-28
+          w-70 md:w-[250px]
+          flex flex-col shadow-xl
           transition-transform duration-300
           ${open ? "translate-x-0" : "-translate-x-full"}
           md:translate-x-0
@@ -42,14 +60,15 @@ export default function Sidebar() {
       >
         {/* CERRAR MOBILE */}
         <button
-          className="md:hidden absolute top-4 right-4 text-white"
+          className="md:hidden absolute top-4 right-4 text-slate-800"
           onClick={() => setOpen(false)}
           aria-label="Close menu"
         >
           <X size={22} />
         </button>
 
-        <div className="flex items-center justify-start gap-2 px-2 py-1 mt-2">
+        {/* LOGO */}
+        <div className="flex items-center gap-2 px-2 py-1 mt-2">
           <Image
             src={logo}
             alt="VetConnect Logo"
@@ -59,32 +78,47 @@ export default function Sidebar() {
         </div>
 
         {/* LINKS */}
-        <nav className="flex flex-col gap-2 mt-4">
-          <Link href="/" className="flex items-center gap-3 p-3 hover:bg-neutral-800 rounded-lg">
-            <Home size={18} /><span>Home</span>
+        <nav className="flex flex-col gap-2 mt-6">
+          <Link
+            href="/"
+            className="flex items-center gap-3 p-3 rounded-xl
+                       hover:bg-slate-100 transition"
+          >
+            <Home size={18} />
+            <span>Home</span>
           </Link>
 
-          <Link href="/clinic" className="flex items-center gap-3 p-3 hover:bg-neutral-800 rounded-lg">
-            <Hospital size={18} /><span>Clinic</span>
+          <Link
+            href="/clinic"
+            className="flex items-center gap-3 p-3 rounded-xl
+                       hover:bg-slate-100 transition"
+          >
+            <Hospital size={18} />
+            <span>Clinic</span>
           </Link>
 
-          <Link href="/product" className="flex items-center gap-3 p-3 hover:bg-neutral-800 rounded-lg">
-            <ShoppingCart size={18} /><span>Product</span>
-          </Link>
-
-          <Link href="/emergency" className="flex items-center gap-3 p-3 hover:bg-neutral-800 rounded-lg">
-            <Siren size={18} /><span>Emergency</span>
+          <Link
+            href="/emergency"
+            className="flex items-center gap-3 p-3 rounded-xl
+                       hover:bg-slate-100 transition"
+          >
+            <Siren size={18} />
+            <span>Emergency</span>
           </Link>
         </nav>
 
         {/* SEPARADOR */}
-        <div className="border-t border-neutral-800 my-2" />
+        <div className="border-t border-slate-200 my-4" />
 
-        {/* USER MENU ALWAYS AT BOTTOM */}
+        {/* USER MENU */}
         <div className="absolute bottom-6 left-0 w-full px-6">
           <button
             onClick={() => setUserOpen(!userOpen)}
-            className="w-full bg-neutral-800 p-3 rounded-lg flex items-center justify-between hover:bg-neutral-700"
+            className="w-full
+                       bg-slate-100
+                       p-3 rounded-xl
+                       flex items-center justify-between
+                       hover:bg-slate-200 transition"
           >
             <div className="flex items-center gap-3">
               <UserIcon size={18} />
@@ -92,8 +126,9 @@ export default function Sidebar() {
             </div>
 
             <svg
-              className={`w-4 h-4 transform transition-transform ${userOpen ? "rotate-180" : ""
-                }`}
+              className={`w-4 h-4 transition-transform ${
+                userOpen ? "rotate-180" : ""
+              }`}
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -101,16 +136,24 @@ export default function Sidebar() {
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <path d="M6 9l6 6 6-6"></path>
+              <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
 
           {/* MENU OPTIONS */}
           {userOpen && (
-            <div className="mt-3 bg-neutral-800 border border-neutral-700 rounded-lg p-3 flex flex-col gap-2">
+            <div
+              className="mt-3
+                         bg-white
+                         border border-slate-200
+                         rounded-xl
+                         shadow-lg
+                         p-3 flex flex-col gap-2"
+            >
               <Link
-                href="/profile"
-                className="flex items-center gap-2 p-2 rounded hover:bg-neutral-700"
+                href="/user"
+                className="flex items-center gap-2 p-2 rounded-lg
+                           hover:bg-slate-100 transition"
               >
                 <UserIcon size={16} />
                 <span>Profile</span>
@@ -118,7 +161,8 @@ export default function Sidebar() {
 
               <Link
                 href="/login"
-                className="flex items-center gap-2 p-2 rounded hover:bg-neutral-700"
+                className="flex items-center gap-2 p-2 rounded-lg
+                           hover:bg-slate-100 transition"
               >
                 <LogIn size={16} />
                 <span>Sign in</span>
@@ -126,7 +170,8 @@ export default function Sidebar() {
 
               <Link
                 href="/register"
-                className="flex items-center gap-2 p-2 rounded hover:bg-neutral-700"
+                className="flex items-center gap-2 p-2 rounded-lg
+                           hover:bg-slate-100 transition"
               >
                 <UserPlus size={16} />
                 <span>Sign up</span>

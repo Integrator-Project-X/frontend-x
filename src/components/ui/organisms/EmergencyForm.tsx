@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 
-const EmergencyForm = () => {
+type EmergencyFormProps = {
+  onSubmit?: (data: { type: string; location: string; description?: string; name?: string; phone?: string }) => Promise<void> | void;
+  submitLabel?: string;
+};
+
+const EmergencyForm = ({ onSubmit, submitLabel = "Send Report to Animal Patrol" }: EmergencyFormProps) => {
   const [formData, setFormData] = useState({
     type: "",
     location: "",
@@ -15,10 +20,21 @@ const EmergencyForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Enviar el reporte a Animal Patrol
-    console.log(formData);
+    if (onSubmit) {
+      await onSubmit({
+        type: formData.type,
+        location: formData.location,
+        description: formData.description,
+        name: formData.name,
+        phone: formData.phone,
+      });
+    } else {
+      console.log(formData);
+      alert("Report sent (demo)");
+    }
   };
 
   return (
@@ -87,7 +103,7 @@ const EmergencyForm = () => {
         type="submit"
         className="w-full py-2 mt-4 text-white bg-blue-600 rounded"
       >
-        Send Report to Animal Patrol
+        {submitLabel}
       </button>
     </form>
   );

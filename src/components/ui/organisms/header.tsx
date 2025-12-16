@@ -22,7 +22,7 @@ export default function Header() {
             Clinics
           </Link>
           <Link
-            href="/emergencies"
+            href="/emergency"
             className="text-sm font-medium text-[var(--emergency)] transition-colors hover:opacity-80"
           >
             24/7 Emergencies

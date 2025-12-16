@@ -1,202 +1,114 @@
 import Link from "next/link";
-import {
-  Users,
-  Building2,
-  CalendarCheck2,
-  ShieldCheck,
-  AlertTriangle,
-  BarChart3,
-  ArrowRight,
-} from "lucide-react";
+import { getAdminStats } from "@/src/core/admin/admin.stats";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/src/components/ui/atoms/card";
-import { Button } from "@/src/components/ui/atoms/button";
+export default async function AdminDashboardPage() {
+  const stats = await getAdminStats();
 
-type Metric = {
-  label: string;
-  value: string;
-  helper?: string;
-  icon: React.ElementType;
-};
-
-type SystemAlert = {
-  title: string;
-  description: string;
-  severity: "high" | "medium" | "low";
-  href: string;
-  icon: React.ElementType;
-};
-
-const metrics: Metric[] = [
-  { label: "Usuarios activos", value: "1,248", helper: "+3.2% vs last 7d", icon: Users },
-  { label: "Clínicas registradas", value: "86", helper: "12 nuevas este mes", icon: Building2 },
-  { label: "Citas totales", value: "4,902", helper: "últimos 30 días", icon: CalendarCheck2 },
-  { label: "Clínicas pendientes", value: "9", helper: "requieren aprobación", icon: ShieldCheck },
-];
-
-const alerts: SystemAlert[] = [
-  {
-    title: "Clínicas pendientes de verificación",
-    description: "Hay 9 clínicas que requieren revisión y aprobación.",
-    severity: "high",
-    href: "/admin/clinics/verification",
-    icon: ShieldCheck,
-  },
-  {
-    title: "Casos problemáticos recientes",
-    description: "3 citas marcadas como problemáticas en las últimas 24h.",
-    severity: "medium",
-    href: "/admin/appointments/problematic",
-    icon: AlertTriangle,
-  },
-  {
-    title: "Revisar reportes de citas",
-    description: "Genera reportes por ciudad y horas pico para decisiones del MVP.",
-    severity: "low",
-    href: "/admin/appointments/reports",
-    icon: BarChart3,
-  },
-];
-
-function severityStyles(sev: SystemAlert["severity"]) {
-  if (sev === "high") return "border-destructive/40 bg-destructive/5";
-  if (sev === "medium") return "border-border bg-muted/40";
-  return "border-border bg-background";
-}
-
-export default function AdminPage() {
   return (
-    <div className="space-y-6">
+    <div className="w-full space-y-8 rounded-2xl bg-slate-50/80 p-6">
       {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Control, crecimiento y calidad de la plataforma (MVP).
+      <div>
+        <h1 className="text-3xl font-bold text-slate-800">
+          Admin Dashboard
+        </h1>
+        <p className="text-slate-600">
+          Overview and shortcuts for platform management.
+        </p>
+      </div>
+
+      {/* Stats cards */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="rounded-xl border border-green-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Active users</p>
+          <p className="text-3xl font-semibold text-green-600">
+            {stats.activeUsers}
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/admin/analytics">Ver analytics</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/admin/clinics/verification">Verificar clínicas</Link>
-          </Button>
+        <div className="rounded-xl border border-blue-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Clinics registered</p>
+          <p className="text-3xl font-semibold text-blue-600">
+            {stats.clinicsRegistered}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">Total appointments</p>
+          <p className="text-3xl font-semibold text-slate-800">
+            {stats.totalAppointments}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-red-200 bg-white p-6 shadow-sm">
+          <p className="text-sm text-slate-500">System alerts</p>
+          <p className="text-3xl font-semibold text-red-600">
+            {stats.systemAlerts}
+          </p>
         </div>
       </div>
 
-      {/* Metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {metrics.map((m) => {
-          const Icon = m.icon;
-          return (
-            <Card key={m.label}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardDescription>{m.label}</CardDescription>
-                  <CardTitle className="mt-1 text-2xl">{m.value}</CardTitle>
-                </div>
-                <div className="grid h-10 w-10 place-items-center rounded-xl border bg-background">
-                  <Icon className="h-5 w-5 text-muted-foreground" />
-                </div>
-              </CardHeader>
-              {m.helper && (
-                <CardContent className="pt-0">
-                  <p className="text-xs text-muted-foreground">{m.helper}</p>
-                </CardContent>
-              )}
-            </Card>
-          );
-        })}
-      </div>
+      {/* Quick links */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800">
+            Quick links
+          </h2>
+          <p className="text-sm text-slate-500">
+            Go directly to the most common admin areas.
+          </p>
+        </div>
 
-      {/* Alerts + Quick actions */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* System Alerts */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Alertas del sistema</CardTitle>
-            <CardDescription>Items que requieren atención del admin.</CardDescription>
-          </CardHeader>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/admin/users/pet-owners"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Pet Owners
+          </Link>
 
-          <CardContent className="space-y-3">
-            {alerts.map((a) => {
-              const Icon = a.icon;
-              return (
-                <Link
-                  key={a.title}
-                  href={a.href}
-                  className={[
-                    "block rounded-2xl border p-4 transition-colors hover:bg-muted/40",
-                    severityStyles(a.severity),
-                  ].join(" ")}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="grid h-10 w-10 place-items-center rounded-xl border bg-background">
-                        <Icon className="h-5 w-5 text-muted-foreground" />
-                      </div>
+          <Link
+            href="/admin/clinics"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Clinics
+          </Link>
 
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold">{a.title}</p>
-                        <p className="text-sm text-muted-foreground">{a.description}</p>
-                      </div>
-                    </div>
+          <Link
+            href="/admin/clinics/verification"
+            className="rounded-lg border border-blue-200 bg-blue-100/70 px-4 py-2 text-blue-700 font-medium transition hover:bg-blue-200"
+          >
+            Clinic Verification
+          </Link>
 
-                    <ArrowRight className="mt-1 h-4 w-4 text-muted-foreground" />
-                  </div>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
+          <Link
+            href="/admin/appointments"
+            className="rounded-lg border border-green-200 bg-green-100/70 px-4 py-2 text-green-700 font-medium transition hover:bg-green-200"
+          >
+            Appointments
+          </Link>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Accesos rápidos</CardTitle>
-            <CardDescription>Navega a módulos core.</CardDescription>
-          </CardHeader>
+          <Link
+            href="/admin/appointments/problematic"
+            className="rounded-lg border border-red-200 bg-red-100/70 px-4 py-2 text-red-700 font-medium transition hover:bg-red-200"
+          >
+            Problematic Cases
+          </Link>
 
-          <CardContent className="space-y-2">
-            <QuickLink href="/admin/users/pet-owners" title="Pet Owners" desc="Gestionar usuarios" />
-            <QuickLink href="/admin/users/vets" title="Veterinarias" desc="Gestionar clínicas" />
-            <QuickLink href="/admin/appointments" title="Citas" desc="Oversight general" />
-            <QuickLink href="/admin/clinics/verification" title="Verificación" desc="Aprobar clínicas" />
-            <QuickLink href="/admin/content" title="Contenido" desc="Static pages & reglas" />
-          </CardContent>
-        </Card>
+          <Link
+            href="/admin/appointments/reports"
+            className="rounded-lg border border-slate-200 bg-slate-100 px-4 py-2 text-slate-700 font-medium transition hover:bg-slate-200"
+          >
+            Reports
+          </Link>
+
+          <Link
+            href="/admin/analytics"
+            className="rounded-lg border border-green-200 bg-green-100/70 px-4 py-2 text-green-700 font-medium transition hover:bg-green-200"
+          >
+            Analytics
+          </Link>
+        </div>
       </div>
     </div>
-  );
-}
-
-function QuickLink({
-  href,
-  title,
-  desc,
-}: {
-  href: string;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between rounded-xl border bg-background px-3 py-2 hover:bg-muted/40"
-    >
-      <div className="space-y-0.5">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-xs text-muted-foreground">{desc}</p>
-      </div>
-      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-    </Link>
   );
 }

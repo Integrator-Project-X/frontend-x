@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   users: {
     create: "/users",
     list: "/users",
+    me: "/users/me",
     byId: (id: string) => `/users/${id}`,
     update: (id: string) => `/users/${id}`,
     deactivate: (id: string) => `/users/${id}/deactivate`,
@@ -132,9 +133,12 @@ export const API_ENDPOINTS = {
   appointments: {
     create: "/appointments",
     list: "/appointments",
+    clinic: "/appointments/clinic",
     byId: (id: string) => `/appointments/${id}`,
     update: (id: string) => `/appointments/${id}`,
     deactivate: (id: string) => `/appointments/${id}/deactivate`,
+    setStatus: (id: string) => `/appointments/${id}/status`,
+    setDiagnosis: (id: string) => `/appointments/${id}/diagnosis`,
   },
 
   diagnosis: {

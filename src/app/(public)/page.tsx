@@ -1,15 +1,20 @@
-import Link from "next/link";
+import Contact from "@/src/components/ui/organisms/contact";
+import Header from "@/src/components/ui/organisms/header";
+import AboutUs from "@/src/components/ui/organisms/about";
+import Services from "@/src/components/ui/organisms/services";
+import Hero from "@/src/components/ui/organisms/hero";
+import Testimonials from "@/src/components/ui/organisms/testimonial";
+
 
 export default function Home() {
   return (
-    <main className="p-6 space-y-3">
-      <h1 className="text-2xl font-semibold">VetConnect</h1>
-
-      <div className="flex gap-3">
-        <Link className="underline" href="/login">Login</Link>
-        <Link className="underline" href="/register">Register</Link>
-        <Link className="underline" href="/dashboard">Dashboard</Link>
-      </div>
-    </main>
+    <>
+      <Header/>
+      <Hero/>
+      <AboutUs/>
+      <Services/>
+      <Testimonials/>      
+      <Contact/>
+    </>
   );
 }

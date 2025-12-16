@@ -1,20 +1,12 @@
 import AdminSidebar from "@/src/components/ui/organisms/AdminSidebar";
-import { requireRole } from "@/src/core/auth/auth.guards";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  await requireRole("ADMIN");
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex">
-      {/* Sidebar siempre visible */}
+    <div className="min-h-screen bg-green-50/60">
       <AdminSidebar />
 
-      {/* Contenido */}
-      <main className="flex-1 pl-[260px] p-6">
+      {/* OJO: usa margin-left, no padding-left */}
+      <main className="min-h-screen ml-[260px] p-6">
         {children}
       </main>
     </div>

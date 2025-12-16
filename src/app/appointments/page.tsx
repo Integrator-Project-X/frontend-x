@@ -52,7 +52,7 @@ export default function AppointmentsPage() {
      Effects
   ========================= */
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       try {
         const petsRes = await petsClient.listAll({ all: true })
         setPets(petsRes.items)
@@ -118,187 +118,186 @@ export default function AppointmentsPage() {
       <Sidebar />
 
       <div className="min-h-screen p-6 md:pl-[250px]">
-  <main className="container mx-auto px-4 py-8">
-    {/* Header */}
-    <div className="mb-8 flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold">Book Appointment</h1>
-        <p className="text-gray-500">
-          Choose a pet and book a visit, or report an emergency.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          className={`rounded-md px-4 py-2 text-sm ${
-            isEmergency ? "bg-red-600 text-white" : "border"
-          }`}
-          onClick={() => setIsEmergency(true)}
-        >
-          <Siren className="inline h-4 w-4" /> Emergency
-        </button>
-
-        <button
-          className={`rounded-md px-4 py-2 text-sm ${
-            !isEmergency ? "bg-blue-600 text-white" : "border"
-          }`}
-          onClick={() => setIsEmergency(false)}
-        >
-          <Calendar className="inline h-4 w-4" /> Book
-        </button>
-      </div>
-    </div>
-
-    <div className="grid gap-8 lg:grid-cols-2">
-      {/* FORMULARIO */}
-      <Box className="p-6 max-w-md w-full mx-auto max-h-[520px] overflow-y-auto">
-        {isEmergency ? (
-          <>
-            <h2 className="mb-4 text-xl font-semibold text-red-600">
-              Emergency
-            </h2>
-
-            <EmergencyForm
-              onSubmit={async (data) => {
-                try {
-                  await emergenciesClient.report({
-                    type: data.type,
-                    location: data.location,
-                    description: data.description,
-                    reporterName: data.name,
-                    reporterPhone: data.phone,
-                  })
-                  alert("Emergency reported")
-                } catch (error) {
-                  console.error(error)
-                  alert("Failed to report emergency")
-                }
-              }}
-            />
-          </>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Pet */}
+        <main className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-8 flex items-center justify-between">
             <div>
-              <label className="text-sm font-medium">Pet</label>
-              <select
-                value={selectedPetId}
-                onChange={(e) => setSelectedPetId(e.target.value)}
-                className="w-full rounded border px-3 py-2"
-              >
-                {pets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — {p.breed}
-                  </option>
-                ))}
-              </select>
+              <h1 className="text-3xl font-bold">Book Appointment</h1>
+              <p className="text-gray-500">
+                Choose a pet and book a visit, or report an emergency.
+              </p>
             </div>
 
-            {/* Clinic */}
+            <div className="flex gap-3">
+              <button
+                className={`rounded-md px-4 py-2 text-sm ${isEmergency ? "bg-red-600 text-white" : "border"
+                  }`}
+                onClick={() => setIsEmergency(true)}
+              >
+                <Siren className="inline h-4 w-4" /> Emergency
+              </button>
+
+              <button
+                className={`rounded-md px-4 py-2 text-sm ${!isEmergency ? "bg-blue-600 text-white" : "border"
+                  }`}
+                onClick={() => setIsEmergency(false)}
+              >
+                <Calendar className="inline h-4 w-4" /> Book
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-8 lg:grid-cols-2">
+            {/* FORMULARIO */}
+            <Box className="p-6 max-w-md w-full mx-auto max-h-[520px] overflow-y-auto">
+              {isEmergency ? (
+                <>
+                  <h2 className="mb-4 text-xl font-semibold text-red-600">
+                    Emergency
+                  </h2>
+
+                  <EmergencyForm
+                    onSubmit={async (data) => {
+                      try {
+                        await emergenciesClient.report({
+                          type: data.type,
+                          location: data.location,
+                          description: data.description,
+                          reporterName: data.name,
+                          reporterPhone: data.phone,
+                        })
+                        alert("Emergency reported")
+                      } catch (error) {
+                        console.error(error)
+                        alert("Failed to report emergency")
+                      }
+                    }}
+                  />
+                </>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Pet */}
+                  <div>
+                    <label className="text-sm font-medium">Pet</label>
+                    <select
+                      value={selectedPetId}
+                      onChange={(e) => setSelectedPetId(e.target.value)}
+                      className="w-full rounded border px-3 py-2"
+                    >
+                      {pets.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {p.breed}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Clinic */}
+                  <div>
+                    <label className="text-sm font-medium">Clinic</label>
+                    <select
+                      name="clinicId"
+                      value={form.clinicId}
+                      onChange={handleFormChange}
+                      className="w-full rounded border px-3 py-2"
+                    >
+                      <option value="">Select a clinic</option>
+                      {mockClinics.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Date & Time */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="date"
+                      name="date"
+                      value={form.date}
+                      onChange={handleFormChange}
+                      className="rounded border px-3 py-2"
+                    />
+                    <input
+                      type="time"
+                      name="time"
+                      value={form.time}
+                      onChange={handleFormChange}
+                      className="rounded border px-3 py-2"
+                    />
+                  </div>
+
+                  {/* Service */}
+                  <select
+                    name="service"
+                    value={form.service}
+                    onChange={handleFormChange}
+                    className="w-full rounded border px-3 py-2"
+                  >
+                    <option>General Consultation</option>
+                    <option>Vaccination</option>
+                    <option>Surgery</option>
+                    <option>Home Visit</option>
+                    <option>Emergency</option>
+                  </select>
+
+                  <button
+                    type="submit"
+                    className="w-full rounded-md bg-blue-600 px-4 py-2 text-white"
+                  >
+                    Create Appointment
+                  </button>
+                </form>
+              )}
+            </Box>
+
+            {/* PETS */}
             <div>
-              <label className="text-sm font-medium">Clinic</label>
-              <select
-                name="clinicId"
-                value={form.clinicId}
-                onChange={handleFormChange}
-                className="w-full rounded border px-3 py-2"
-              >
-                <option value="">Select a clinic</option>
-                {mockClinics.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Date & Time */}
-            <div className="grid grid-cols-2 gap-4">
-              <input
-                type="date"
-                name="date"
-                value={form.date}
-                onChange={handleFormChange}
-                className="rounded border px-3 py-2"
-              />
-              <input
-                type="time"
-                name="time"
-                value={form.time}
-                onChange={handleFormChange}
-                className="rounded border px-3 py-2"
-              />
-            </div>
-
-            {/* Service */}
-            <select
-              name="service"
-              value={form.service}
-              onChange={handleFormChange}
-              className="w-full rounded border px-3 py-2"
-            >
-              <option>General Consultation</option>
-              <option>Vaccination</option>
-              <option>Surgery</option>
-              <option>Home Visit</option>
-              <option>Emergency</option>
-            </select>
-
-            <button
-              type="submit"
-              className="w-full rounded-md bg-blue-600 px-4 py-2 text-white"
-            >
-              Create Appointment
-            </button>
-          </form>
-        )}
-      </Box>
-
-      {/* PETS */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Your Pets</h2>
-          <Link
-            href="/pets/new"
-            className="flex items-center gap-2 rounded-md bg-black px-3 py-1 text-sm text-white"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Add Pet
-          </Link>
-        </div>
-
-        {pets.map((pet) => (
-          <Box key={pet.id} className="mb-4 p-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={pet.imageUrl || "/placeholder.svg"}
-                className="h-16 w-16 rounded-lg object-cover"
-                alt={pet.name}
-              />
-              <div>
-                <h3 className="font-semibold">{pet.name}</h3>
-                <p className="text-sm text-gray-500">
-                  {pet.breed} • {pet.age} years
-                </p>
-                <button
-                  className="mt-1 text-sm text-blue-600"
-                  onClick={() => setViewPet(pet)}
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Your Pets</h2>
+                <Link
+                  href="/pets/new"
+                  className="flex items-center gap-2 rounded-md bg-black px-3 py-1 text-sm text-white"
                 >
-                  View
-                </button>
+                  <PlusCircle className="h-4 w-4" />
+                  Add Pet
+                </Link>
               </div>
-            </div>
-          </Box>
-        ))}
 
-        <PetDetailsModal
-          pet={viewPet}
-          onClose={() => setViewPet(null)}
-        />
+              {pets.map((pet) => (
+                <Box key={pet.id} className="mb-4 p-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={pet.imageUrl || "/placeholder.svg"}
+                      className="h-16 w-16 rounded-lg object-cover"
+                      alt={pet.name}
+                    />
+                    <div>
+                      <h3 className="font-semibold">{pet.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        {pet.breed} • {pet.age} years
+                      </p>
+                      <button
+                        className="mt-1 text-sm text-blue-600"
+                        onClick={() => setViewPet(pet)}
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                </Box>
+              ))}
+
+              <PetDetailsModal
+                open={!!viewPet}
+                pet={viewPet}
+                onClose={() => setViewPet(null)}
+              />
+            </div>
+          </div>
+        </main>
       </div>
-    </div>
-  </main>
-</div>
 
     </>
   )

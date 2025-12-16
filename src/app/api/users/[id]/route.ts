@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
@@ -34,26 +34,27 @@ function normalizeNumericId(value: unknown): string | null {
   return s;
 }
 
-// ✅ TIPOS: params puede venir como Promise en tu versión de Next
-type Ctx = { params: { id: string } | Promise<{ id: string }> };
+type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function GET(_: Request, ctx: Ctx) {
+export async function GET(_: NextRequest, ctx: RouteCtx) {
   if (!BASE_URL) {
-    return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Missing NEXT_PUBLIC_API_URL" },
+      { status: 500 }
+    );
   }
 
-  const params = await ctx.params; // ✅ clave
-  const id = normalizeNumericId(params?.id);
+  const { id: rawId } = await ctx.params;
+  const id = normalizeNumericId(rawId);
 
   if (!id) {
     return NextResponse.json(
-      { ok: false, message: "Invalid route param id", received: params?.id },
+      { ok: false, message: "Invalid route param id", received: rawId },
       { status: 400 }
     );
   }
 
-  const path = API_ENDPOINTS.users.byId(id);
-  const url = joinUrl(BASE_URL, path);
+  const url = joinUrl(BASE_URL, API_ENDPOINTS.users.byId(id));
 
   const res = await fetch(url, {
     method: "GET",
@@ -77,25 +78,27 @@ export async function GET(_: Request, ctx: Ctx) {
   return NextResponse.json(payload?.data ?? payload, { status: 200 });
 }
 
-export async function PATCH(req: Request, ctx: Ctx) {
+export async function PATCH(req: NextRequest, ctx: RouteCtx) {
   if (!BASE_URL) {
-    return NextResponse.json({ message: "Missing NEXT_PUBLIC_API_URL" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Missing NEXT_PUBLIC_API_URL" },
+      { status: 500 }
+    );
   }
 
-  const params = await ctx.params; // ✅ clave
-  const id = normalizeNumericId(params?.id);
+  const { id: rawId } = await ctx.params;
+  const id = normalizeNumericId(rawId);
 
   if (!id) {
     return NextResponse.json(
-      { ok: false, message: "Invalid route param id", received: params?.id },
+      { ok: false, message: "Invalid route param id", received: rawId },
       { status: 400 }
     );
   }
 
   const body = await req.json().catch(() => ({}));
 
-  const path = API_ENDPOINTS.users.update(id);
-  const url = joinUrl(BASE_URL, path);
+  const url = joinUrl(BASE_URL, API_ENDPOINTS.users.update(id));
 
   const res = await fetch(url, {
     method: "PATCH",

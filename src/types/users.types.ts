@@ -21,3 +21,19 @@ export type BackendUser = {
   roleName: string;
   isActive: boolean;
 };
+
+export type UserMe = {
+  id_user: number;
+  full_name: string;
+  age?: number;
+  address?: string;
+  phone_number?: string;
+  identification_number?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  gender?: {
+    id_gender: number;
+    gender_name: string;
+  } | null;
+};

@@ -7,8 +7,8 @@ export default async function DashboardPage() {
   const role = await getUserRole();
 
   if (role === "ADMIN") redirect("/admin");
-  if (role === "CLINIC") redirect("/clinic"); // futuro
-  if (role === "OWNER") redirect("/owner");   // futuro
+  if (role === "VET") redirect("/vet"); // futuro
+  if (role === "CLIENT") redirect("/owner");   // futuro
 
   redirect("/login");
 }

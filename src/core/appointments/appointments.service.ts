@@ -40,3 +40,34 @@ export async function getAppointments(): Promise<AdminAppointmentRow[]> {
 export async function deactivateAppointment(id: string | number) {
   return apiServer.patch(API_ENDPOINTS.appointments.deactivate(String(id)));
 }
+
+export async function getClinicAppointments(): Promise<AppointmentAPI[]> {
+  const raw = await apiServer.get<unknown>(API_ENDPOINTS.appointments.clinic);
+  return unwrapArray<AppointmentAPI>(raw);
+}
+
+export async function getAppointmentById(id: string | number): Promise<AppointmentAPI> {
+  const raw = await apiServer.get<any>(API_ENDPOINTS.appointments.byId(String(id)));
+  return (raw?.data ?? raw) as AppointmentAPI;
+}
+
+export async function updateAppointmentStatus(
+  id: string | number,
+  id_status: number
+): Promise<AppointmentAPI> {
+  const raw = await apiServer.patch<any>(API_ENDPOINTS.appointments.setStatus(String(id)), {
+    id_status,
+  });
+  return (raw?.data ?? raw) as AppointmentAPI;
+}
+
+export async function setAppointmentDiagnosis(
+  id: string | number,
+  payload: { id_personal: number; description: string }
+): Promise<AppointmentAPI> {
+  const raw = await apiServer.patch<any>(
+    API_ENDPOINTS.appointments.setDiagnosis(String(id)),
+    payload
+  );
+  return (raw?.data ?? raw) as AppointmentAPI;
+}

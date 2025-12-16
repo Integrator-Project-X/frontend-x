@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
@@ -27,7 +27,7 @@ async function safeJson(res: Response) {
   }
 }
 
-async function handler({ id }: { id: string }) {
+async function handler(id: string) {
   if (!BASE_URL) {
     return NextResponse.json(
       { message: "Missing NEXT_PUBLIC_API_URL" },
@@ -49,12 +49,16 @@ async function handler({ id }: { id: string }) {
   return NextResponse.json(data, { status: res.status });
 }
 
+type RouteCtx = { params: Promise<{ id: string }> };
+
 // Por si lo llamas desde el front con POST
-export async function POST(_: Request, { params }: { params: { id: string } }) {
-  return handler({ id: params.id });
+export async function POST(_: NextRequest, ctx: RouteCtx) {
+  const { id } = await ctx.params;
+  return handler(id);
 }
 
 // Y por si lo llamas como PATCH
-export async function PATCH(_: Request, { params }: { params: { id: string } }) {
-  return handler({ id: params.id });
+export async function PATCH(_: NextRequest, ctx: RouteCtx) {
+  const { id } = await ctx.params;
+  return handler(id);
 }

@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { API_ENDPOINTS } from "@/src/core/api/api.endpoints";
+import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+async function getAuthHeader(): Promise<Record<string, string>> {
+  const store = await cookies();
+  const token = store.get(AUTH_COOKIES.token)?.value;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export async function GET() {
   if (!BASE_URL) {
@@ -10,7 +18,10 @@ export async function GET() {
 
   const res = await fetch(`${BASE_URL}${API_ENDPOINTS.genders.active}`, {
     method: "GET",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Accept: "application/json",
+      ...(await getAuthHeader()),
+    },
     cache: "no-store",
   });
 

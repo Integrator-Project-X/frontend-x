@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
-import { Search, Eye, Ban, RefreshCcw } from "lucide-react";
+import { Search, Ban, RefreshCcw } from "lucide-react";
 
 import {
   Card,
@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "@/src/components/ui/atoms/table";
 
+import UserViewButton from "@/src/components/ui/organisms/UserViewButton";
+
 import type { BackendUser } from "@/src/types/users.types";
 import {
   getUsersWithRoles,
@@ -28,26 +30,10 @@ import {
   restoreUser,
 } from "@/src/core/users/users.service";
 
-type PetOwnersSearchParams = {
+type SearchParams = {
   q?: string;
   status?: "all" | "active" | "suspended";
 };
-
-// Helpers
-function normalizeRole(u: BackendUser) {
-  return (u.roleName ?? "")
-    .toString()
-    .trim()
-    .toUpperCase();
-}
-
-function statusBadge(isActive?: boolean) {
-  return isActive === false ? (
-    <Badge variant="destructive">Suspended</Badge>
-  ) : (
-    <Badge variant="default">Active</Badge>
-  );
-}
 
 function safeStatus(value?: string): "all" | "active" | "suspended" {
   if (value === "active" || value === "suspended" || value === "all") return value;
@@ -61,9 +47,16 @@ function buildHref(q: string, status: "all" | "active" | "suspended") {
   return `/admin/users/pet-owners?${params.toString()}`;
 }
 
+function statusBadge(isActive?: boolean) {
+  return isActive === false ? (
+    <Badge variant="destructive">Suspended</Badge>
+  ) : (
+    <Badge variant="default">Active</Badge>
+  );
+}
+
 type PageProps = {
-  // compatible con Next (a veces te llega como Promise en Next 16)
-  searchParams?: PetOwnersSearchParams | Promise<PetOwnersSearchParams>;
+  searchParams?: SearchParams | Promise<SearchParams>;
 };
 
 export default async function PetOwnersPage({ searchParams }: PageProps) {
@@ -73,33 +66,34 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
   const q = qRaw.toLowerCase();
   const status = safeStatus(sp.status);
 
-  // ✅ Trae users + roleName (usando /users + /access + /roles)
   const users = await getUsersWithRoles();
 
-  // Only Pet Owners (OWNER)
-  let petOwners = users.filter((u) => normalizeRole(u) === "OWNER");
+  let filteredUsers: BackendUser[] = [...users];
 
-  // status filter
-  if (status === "active") petOwners = petOwners.filter((u) => u.isActive !== false);
-  if (status === "suspended") petOwners = petOwners.filter((u) => u.isActive === false);
+  // Filtro por estado (MISMO patrón que Roles)
+  if (status === "active") {
+    filteredUsers = filteredUsers.filter((u) => u.isActive !== false);
+  }
 
-  // search filter
+  if (status === "suspended") {
+    filteredUsers = filteredUsers.filter((u) => u.isActive === false);
+  }
+
+  // Filtro por nombre o email
   if (q) {
-    petOwners = petOwners.filter((u) => {
+    filteredUsers = filteredUsers.filter((u) => {
       const name = (u.name ?? "").toLowerCase();
       const email = (u.email ?? "").toLowerCase();
       return name.includes(q) || email.includes(q);
     });
   }
 
-  const total = petOwners.length;
+  const total = filteredUsers.length;
 
-  // Server Actions
   async function suspendAction(formData: FormData) {
     "use server";
     const id = String(formData.get("id") ?? "");
     if (!id) return;
-
     await deactivateUser(id);
     revalidatePath("/admin/users/pet-owners");
   }
@@ -108,23 +102,22 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
     "use server";
     const id = String(formData.get("id") ?? "");
     if (!id) return;
-
     await restoreUser(id);
     revalidatePath("/admin/users/pet-owners");
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Pet Owners</h1>
-          <p className="text-muted-foreground">
-            Manage pet owners, status (active/suspended), and basic user info.
+          <h1 className="text-2xl font-bold text-slate-800">Pet Owners</h1>
+          <p className="text-sm text-slate-600">
+            Manage users, roles and status directly from backend data.
           </p>
         </div>
 
-        <Button asChild variant="outline">
+        <Button asChild variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
           <Link href="/admin/users/vets">Go to Vets</Link>
         </Button>
       </div>
@@ -134,18 +127,17 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
         <CardHeader>
           <CardTitle className="text-base">Filters</CardTitle>
           <CardDescription>
-            Search by name or email. Filters run on the server via query params.
+            Search by name or email and filter by status.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          {/* Search (GET form) */}
+        <CardContent className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <form
             className="relative w-full md:max-w-md"
             action="/admin/users/pet-owners"
             method="GET"
           >
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input
               name="q"
               defaultValue={qRaw}
@@ -156,41 +148,29 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
           </form>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              asChild
-              variant={status === "all" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild size="sm" variant={status === "all" ? "secondary" : "outline"}>
               <Link href={buildHref(qRaw, "all")}>All</Link>
             </Button>
 
-            <Button
-              asChild
-              variant={status === "active" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild size="sm" variant={status === "active" ? "secondary" : "outline"}>
               <Link href={buildHref(qRaw, "active")}>Active</Link>
             </Button>
 
-            <Button
-              asChild
-              variant={status === "suspended" ? "secondary" : "outline"}
-              size="sm"
-            >
+            <Button asChild size="sm" variant={status === "suspended" ? "secondary" : "outline"}>
               <Link href={buildHref(qRaw, "suspended")}>Suspended</Link>
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Table */}
+      {/* List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">List</CardTitle>
+          <CardTitle className="text-base">Users list</CardTitle>
           <CardDescription>{total} result(s)</CardDescription>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -202,45 +182,43 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
             </TableHeader>
 
             <TableBody>
-              {petOwners.length === 0 ? (
+              {filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-sm text-muted-foreground">
+                  <TableCell colSpan={4} className="py-6 text-center text-sm text-slate-500">
                     No results found.
                   </TableCell>
                 </TableRow>
               ) : (
-                petOwners.map((u) => {
-                  const role = normalizeRole(u);
+                filteredUsers.map((u) => {
                   const active = u.isActive !== false;
 
                   return (
-                    <TableRow key={u.id}>
+                    <TableRow key={u.id} className="hover:bg-slate-50">
                       <TableCell>
                         <div className="space-y-0.5">
-                          <p className="font-medium">{u.name ?? "—"}</p>
-                          <p className="text-xs text-muted-foreground">{u.email}</p>
+                          <p className="font-medium text-slate-800">
+                            {u.name || "—"}
+                          </p>
+                          <p className="text-xs text-slate-500">{u.email}</p>
                         </div>
                       </TableCell>
 
                       <TableCell>{statusBadge(u.isActive)}</TableCell>
 
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">{role || "—"}</span>
+                        <span className="text-sm text-slate-600">
+                          {u.roleName || "—"}
+                        </span>
                       </TableCell>
 
                       <TableCell className="text-right">
-                        <div className="inline-flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/admin/users/pet-owners/${u.id}`}>
-                              <Eye className="h-4 w-4" />
-                              View
-                            </Link>
-                          </Button>
+                        <div className="inline-flex items-center gap-2">
+                          <UserViewButton user={u} />
 
                           {active ? (
                             <form action={suspendAction}>
                               <input type="hidden" name="id" value={u.id} />
-                              <Button variant="destructive" size="sm" type="submit">
+                              <Button variant="destructive" size="sm">
                                 <Ban className="h-4 w-4" />
                                 Suspend
                               </Button>
@@ -248,7 +226,11 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
                           ) : (
                             <form action={restoreAction}>
                               <input type="hidden" name="id" value={u.id} />
-                              <Button variant="secondary" size="sm" type="submit">
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="bg-green-100 text-green-700 hover:bg-green-200"
+                              >
                                 <RefreshCcw className="h-4 w-4" />
                                 Restore
                               </Button>
@@ -262,14 +244,6 @@ export default async function PetOwnersPage({ searchParams }: PageProps) {
               )}
             </TableBody>
           </Table>
-
-          <p className="mt-3 text-xs text-muted-foreground">
-            Connected to backend: <span className="font-mono">GET /users</span> +{" "}
-            <span className="font-mono">GET /access</span> +{" "}
-            <span className="font-mono">GET /roles</span>. Actions call{" "}
-            <span className="font-mono">PATCH /users/:id/deactivate</span> and{" "}
-            <span className="font-mono">PATCH /users/:id/restore</span>.
-          </p>
         </CardContent>
       </Card>
     </div>

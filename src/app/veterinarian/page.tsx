@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { fetchData } from '@/src//lib/api'
+import { fetchData } from '@/src/lib/api'
 import BarChart from '@/src/components/ui/charts/BarChart'
 import LineChart from '@/src/components/ui/charts/LineChart'
 import KpiCard from '@/src/components/ui/organisms/KpiCard'

@@ -13,7 +13,9 @@ type ApiEnvelope<T> = {
   error?: string;
 };
 
-type RequestOptions = { tags?: string[] };
+type RequestOptions = {
+  headers?: HeadersInit;
+};
 
 function safeJsonParse(text: string) {
   try {
@@ -29,20 +31,29 @@ async function request<T>(
   body?: unknown,
   options?: RequestOptions
 ): Promise<T> {
-  const cookieStore = await cookies(); // ✅ FIX: cookies() es async
+  const cookieStore = await cookies();
   const token = cookieStore.get(TOKEN_COOKIE)?.value;
 
   const headers = new Headers();
   headers.set("Accept", "application/json");
-  if (body !== undefined) headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  headers.set("Content-Type", "application/json");
 
-  const res = await fetch(`${BASE_URL}${path}`, {
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  if (options?.headers) {
+    Object.entries(options.headers).forEach(([key, value]) => {
+      if (value) headers.set(key, String(value));
+    });
+  }
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  const res = await fetch(`${BASE_URL}${normalizedPath}`, {
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
-    cache: "no-store",
-    next: options?.tags ? { tags: options.tags } : undefined,
   });
 
   const text = await res.text().catch(() => "");
@@ -52,7 +63,8 @@ async function request<T>(
     const msg =
       maybe?.message ??
       maybe?.error ??
-      (text || "Request failed");
+      text ??
+      "Request failed";
 
     const finalMsg = Array.isArray(msg) ? msg.join(", ") : String(msg);
     throw new Error(`API ${method} ${path} -> ${res.status} ${finalMsg}`);
@@ -62,7 +74,6 @@ async function request<T>(
 
   const json = safeJsonParse(text) as ApiEnvelope<T> | T | null;
 
-  // soporta { success, data } o data directa
   if (json && typeof json === "object" && "data" in json) {
     return (json as ApiEnvelope<T>).data;
   }
@@ -70,16 +81,16 @@ async function request<T>(
   return json as T;
 }
 
-export const apiServer = {
-  get: <T,>(path: string, options?: RequestOptions) =>
+export const apiClient = {
+  get: <T>(path: string, options?: RequestOptions) =>
     request<T>("GET", path, undefined, options),
 
-  post: <T,>(path: string, body: unknown, options?: RequestOptions) =>
+  post: <T>(path: string, body: unknown, options?: RequestOptions) =>
     request<T>("POST", path, body, options),
 
-  patch: <T,>(path: string, body?: unknown, options?: RequestOptions) =>
+  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
     request<T>("PATCH", path, body, options),
 
-  delete: <T,>(path: string, options?: RequestOptions) =>
+  delete: <T>(path: string, options?: RequestOptions) =>
     request<T>("DELETE", path, undefined, options),
 };

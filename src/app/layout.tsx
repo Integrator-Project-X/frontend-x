@@ -23,9 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${geistSans.variable} ${geistMono.variable}
       bg-green-50/60
       `}>
-
           {children}
-
       </body>
     </html>
   );

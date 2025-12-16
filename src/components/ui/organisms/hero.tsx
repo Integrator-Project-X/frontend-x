@@ -1,4 +1,3 @@
-// components/Hero.tsx
 const Hero = () => {
   return (
     <section className="relative w-full h-[50vh] bg-gradient-to-r from-teal-500 to-teal-700 text-white flex flex-col justify-center items-center">

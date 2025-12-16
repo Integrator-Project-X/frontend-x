@@ -1,4 +1,3 @@
-// components/Contact.tsx
 const Contact = () => {
   return (
     <section id="contact" className="py-16 bg-white">

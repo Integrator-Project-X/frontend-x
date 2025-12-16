@@ -1,4 +1,3 @@
-// components/Services.tsx
 const Services = () => {
   return (
     <section id="services" className="py-16 bg-white">

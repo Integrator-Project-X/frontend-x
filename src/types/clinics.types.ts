@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-export type VetClinicStatus = "A" | "" | "PENDING";
-
-export type VetClinic = {
-  id: string;
-  name: string;
-  email: string;
-  city: string;
-  status: VetClinicStatus;
-  verified: boolean;
-};
-=======
 export type ClinicAPI = {
   id_clinic: number;
   clinic_name: string | null;
@@ -29,4 +17,3 @@ export type AdminClinicRow = {
   imageUrl: string | null;
   isActive: boolean;
 };
->>>>>>> feat/api_client

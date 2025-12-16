@@ -1,4 +1,3 @@
-import "server-only";
 import { cookies } from "next/headers";
 import { AUTH_COOKIES } from "@/src/core/auth/auth.constants";
 

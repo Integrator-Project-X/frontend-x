@@ -36,7 +36,7 @@ function normalizeNumericId(value: unknown): string | null {
 
 type RouteCtx = { params: Promise<{ id: string }> };
 
-export async function GET(_: NextRequest, ctx: RouteCtx) {
+async function handler(id: string) {
   if (!BASE_URL) {
     return NextResponse.json(
       { message: "Missing NEXT_PUBLIC_API_URL" },
@@ -44,48 +44,22 @@ export async function GET(_: NextRequest, ctx: RouteCtx) {
     );
   }
 
-  const { id: rawId } = await ctx.params;
-  const id = normalizeNumericId(rawId);
-
-  if (!id) {
-    return NextResponse.json(
-      { ok: false, message: "Invalid route param id", received: rawId },
-      { status: 400 }
-    );
-  }
-
-  const url = joinUrl(BASE_URL, API_ENDPOINTS.users.byId(id));
+  // Ajusta esto a tu endpoint real:
+  const url = joinUrl(BASE_URL, API_ENDPOINTS.users.restore(id));
 
   const res = await fetch(url, {
-    method: "GET",
+    method: "PATCH", // o "POST" si tu backend lo requiere
     headers: {
       "Content-Type": "application/json",
       ...(await authHeaders()),
     },
-    cache: "no-store",
   });
 
-  const payload: any = await safeJson(res);
-
-  if (!res.ok) {
-    console.log("BACKEND ERROR GET /users/:id", { id, url, status: res.status, payload });
-    return NextResponse.json(
-      { ok: false, status: res.status, url, payload },
-      { status: res.status }
-    );
-  }
-
-  return NextResponse.json(payload?.data ?? payload, { status: 200 });
+  const data = await safeJson(res);
+  return NextResponse.json(data, { status: res.status });
 }
 
-export async function PATCH(req: NextRequest, ctx: RouteCtx) {
-  if (!BASE_URL) {
-    return NextResponse.json(
-      { message: "Missing NEXT_PUBLIC_API_URL" },
-      { status: 500 }
-    );
-  }
-
+export async function POST(_: NextRequest, ctx: RouteCtx) {
   const { id: rawId } = await ctx.params;
   const id = normalizeNumericId(rawId);
 
@@ -96,28 +70,20 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
     );
   }
 
-  const body = await req.json().catch(() => ({}));
+  return handler(id);
+}
 
-  const url = joinUrl(BASE_URL, API_ENDPOINTS.users.update(id));
+// Si también lo expones como PATCH:
+export async function PATCH(_: NextRequest, ctx: RouteCtx) {
+  const { id: rawId } = await ctx.params;
+  const id = normalizeNumericId(rawId);
 
-  const res = await fetch(url, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...(await authHeaders()),
-    },
-    body: JSON.stringify(body),
-  });
-
-  const payload: any = await safeJson(res);
-
-  if (!res.ok) {
-    console.log("BACKEND ERROR PATCH /users/:id", { id, url, status: res.status, body, payload });
+  if (!id) {
     return NextResponse.json(
-      { ok: false, status: res.status, url, body, payload },
-      { status: res.status }
+      { ok: false, message: "Invalid route param id", received: rawId },
+      { status: 400 }
     );
   }
 
-  return NextResponse.json(payload?.data ?? payload, { status: 200 });
+  return handler(id);
 }
